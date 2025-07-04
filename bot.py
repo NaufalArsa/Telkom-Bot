@@ -37,13 +37,16 @@ pattern = re.compile(r"""
 @client.on(events.NewMessage(incoming=True))
 async def handler(event):
     if event.is_private and event.text:
+        # Abaikan jika pesan adalah /format
+        if event.text.strip().lower() == "/format":
+            return
         match = pattern.search(event.text.strip())
         if match:
             row = match.groupdict()
             # Tambahkan data ke Google Sheet
             sheet.append_row([
                 row['bulan'], row['nama_sa'], row['cluster'], row['usaha'],
-                row['pic'], row['wa'], row['internet'], row['biaya'], row['voc']
+                row['pic'], row['hpwa'], row['internet'], row['biaya'], row['voc']
             ])
             await event.reply("Data berhasil disimpan ke Google Spreadsheet.")
         else:
