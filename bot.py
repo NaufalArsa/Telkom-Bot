@@ -1,4 +1,4 @@
-import os, re
+import os, re, json
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from telethon import TelegramClient, events
@@ -11,9 +11,13 @@ bot_token = os.environ.get("BOT_TOKEN")
 
 client = TelegramClient('bot', api_id, api_hash).start(bot_token=bot_token)
 
-# Setup Google Sheets API
+creds_json = os.environ.get("GOOGLE_CREDS_JSON")
+if not creds_json:
+    raise ValueError("GOOGLE_CREDS_JSON environment variable not set!")
+
+creds_dict = json.loads(creds_json)
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 gc = gspread.authorize(creds)
 sheet = gc.open('Recap Visit').sheet1 
 
