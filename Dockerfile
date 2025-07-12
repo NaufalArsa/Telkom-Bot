@@ -15,9 +15,6 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-# Install Puppeteer browsers (Chrome)
-RUN npx puppeteer browsers install chrome
-
 # Copy Python requirements and install
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
