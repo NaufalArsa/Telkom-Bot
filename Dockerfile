@@ -9,7 +9,7 @@ RUN apt-get update && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Set work directory
-WORKDIR /app
+WORKDIR /
 
 # Copy package.json and package-lock.json and install Node dependencies
 COPY package.json package-lock.json ./
