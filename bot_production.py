@@ -17,6 +17,35 @@ from google.oauth2.service_account import Credentials
 # Load environment variables
 load_dotenv()
 
+def get_env_var(name, required=True):
+    value = os.environ.get(name)
+    if required and not value:
+        raise ValueError(f"{name} environment variable not set!")
+    return value
+
+# Environment variables (use the same names as in bot.py)
+API_ID = int(get_env_var('API_ID'))
+API_HASH = get_env_var('API_HASH')
+BOT_TOKEN = get_env_var('BOT_TOKEN')
+DRIVE_ID = get_env_var('GOOGLE_DRIVE_FOLDER_ID')
+SHEET_NAME = get_env_var('GOOGLE_SHEET_NAME')
+NODE_SCRIPT_PATH = get_env_var('NODE_SCRIPT_PATH')
+
+# Load Google credentials from environment variable
+try:
+    creds_json = get_env_var('GOOGLE_CREDS_JSON')
+    creds_dict = json.loads(creds_json)
+    scope = [
+        "https://spreadsheets.google.com/feeds",
+        "https://www.googleapis.com/auth/drive"
+    ]
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+    gc = gspread.authorize(creds)
+    sheet = gc.open(SHEET_NAME).sheet1
+except Exception as e:
+    print(f"Error loading Google credentials or opening sheet: {e}")
+    exit(1)
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -27,21 +56,6 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
-
-def get_env_var(name, required=True):
-    value = os.environ.get(name)
-    if required and not value:
-        raise ValueError(f"{name} environment variable not set!")
-    return value
-
-# Environment variables
-API_ID = get_env_var('TELEGRAM_API_ID')
-API_HASH = get_env_var('TELEGRAM_API_HASH')
-BOT_TOKEN = get_env_var('TELEGRAM_BOT_TOKEN')
-DRIVE_ID = get_env_var('GOOGLE_DRIVE_FOLDER_ID')
-SHEET_NAME = get_env_var('GOOGLE_SHEET_NAME')
-CREDENTIALS_FILE = get_env_var('GOOGLE_CREDENTIALS_FILE')
-NODE_SCRIPT_PATH = get_env_var('NODE_SCRIPT_PATH')
 
 # Column indices for spreadsheet
 COLUMNS = {
@@ -92,25 +106,6 @@ CAPTION_PATTERN = re.compile(r"""
 
 # Initialize client and services
 client = TelegramClient('bot', API_ID, API_HASH).start(bot_token=BOT_TOKEN)
-
-# Load credentials
-try:
-    with open(CREDENTIALS_FILE, 'r') as f:
-        creds_dict = json.load(f)
-    logger.info("Google credentials loaded successfully")
-except Exception as e:
-    logger.error(f"Failed to load Google credentials: {e}")
-    creds_dict = {}
-
-# Initialize Google services
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-try:
-    gc = gspread.service_account(filename=CREDENTIALS_FILE)
-    sheet = gc.open(SHEET_NAME).sheet1
-    logger.info("Google Sheets connection established")
-except Exception as e:
-    logger.error(f"Failed to connect to Google Sheets: {e}")
-    sheet = None
 
 # Data storage
 pending_data: Dict[str, Dict] = {}
@@ -790,4 +785,4 @@ if __name__ == "__main__":
         logger.info("🛑 Bot stopped by user")
     except Exception as e:
         logger.error(f"❌ Fatal error: {e}")
-        raise 
+        raise
