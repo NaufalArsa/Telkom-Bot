@@ -11,9 +11,15 @@ RUN apt-get update && \
 # Set work directory
 WORKDIR /app
 
-# Copy Node.js dependencies and install
+# Set environment variable to skip Puppeteer's auto Chromium download
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+
+# Copy Node dependencies and install
 COPY package*.json ./
 RUN npm install
+
+# Manually install Chromium after npm install
+RUN npx puppeteer browsers install chrome
 
 # Copy Python requirements and install
 COPY requirements.txt .
