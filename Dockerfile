@@ -12,8 +12,9 @@ RUN apt-get update && \
 WORKDIR /app
 
 # Copy package.json and package-lock.json and install Node dependencies
-COPY package*.json ./
-RUN npm install
+COPY package.json package-lock.json ./
+RUN node index.js
+RUN npx puppeteer browsers install chrome
 
 # Copy Python requirements and install
 COPY requirements.txt .
