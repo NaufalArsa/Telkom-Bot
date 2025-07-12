@@ -12,6 +12,7 @@ RUN apt-get update && \
 WORKDIR /
 
 # Copy package.json and package-lock.json and install Node dependencies
+COPY index.js expand.js ./
 COPY package.json package-lock.json ./
 RUN node index.js
 RUN npx puppeteer browsers install chrome
