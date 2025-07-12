@@ -33,30 +33,38 @@ function unshortenUrl(url) {
         hostname,
         method: "HEAD",
         path: parsedUrl.pathname + parsedUrl.search,
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
       };
 
-      const req = https.request(options, (res) => {
-        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-          const newUrl = res.headers.location;
-          unshortenUrl(newUrl).then(resolve).catch(() => resolve(url)); // Recursively unshorten
-        } else {
-          resolve(url);
-        }
-        req.end();
-      });
+      limitRequestInit++;
+      if (limitRequestInit === limitRequest) {
+        resolve(null);
+      }
+      resolve(url);
 
-      req.on("error", (error) => {
-        console.error("Error unshortening URL:", url, error.message);
-        resolve(url); // Return original URL on error
-      });
+      // const req = https.request(options, (res) => {
+      //   // if (
+      //   //   res.statusCode >= 300 &&
+      //   //   res.statusCode < 400 &&
+      //   //   res.headers.location
+      //   // ) {
+      //   //   const newUrl = res.headers.location;
+      //   //   unshortenUrl(newUrl).then(resolve).catch(reject); // Recursively unshorten
+      //   // } else {
+      //   //   resolve(url);
+      //   // }
+      //   req.end();
+      //   resolve(url);
+      // });
 
-      req.end();
+      // req.on("error", (error) => {
+      //   console.error("Error unshortening URL:", url, error.message);
+      //   reject(url); // Return original URL on error
+      // });
+
+      // req.end();
     } catch (error) {
       console.error("Error unshortening URL:", url, error.message);
-      resolve(url); // Return original URL on error
+      reject(url); // Return original URL on error
     }
   });
 }
@@ -80,43 +88,41 @@ async function convertMapUrlToPoint(url) {
   if (check === false) {
     return { latitude: null, longitude: null };
   }
-  
-  try {
-    const unshortenedUrl = await unshortenUrl(url);
-    console.log("Unshortened URL:", unshortenedUrl);
-    
-    let coor = urlToPoint(unshortenedUrl);
-    if (coor === null) {
-      coor = await getCoordsWithPuppeteer(unshortenedUrl);
-    }
-    return coor;
-  } catch (error) {
-    console.error("Error processing URL:", error);
-    return { latitude: null, longitude: null };
-  }
+  return unshortenUrl(url)
+    .then((unshortenedUrl) => {
+      console.log("Unshortened URL:", unshortenedUrl);
+      let coor = urlToPoint(unshortenedUrl);
+      if (coor === null) {
+        coor = getCoordsWithPuppeteer(unshortenedUrl);
+      }
+      return coor;
+    })
+    .catch((error) => {
+      console.error("Error unshortening URL:", error);
+    });
 }
 
 async function getCoordsWithPuppeteer(url) {
   const browser = await puppeteer.launch({
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    headless: true
   });
   const page = await browser.newPage();
 
   try {
-    await page.goto(url, { waitUntil: 'networkidle2' });
+    await page.goto(url);
 
     // Wait for 3 seconds for the full URL to appear
     await new Promise((res) => setTimeout(res, 3000));
 
     const fullUrl = page.url(); // Get the updated URL
-    console.log("Final URL from Puppeteer:", fullUrl);
 
     if (url !== fullUrl) {
       return urlToPoint(fullUrl);
     }
 
-    return null;
+    const coords = await convertMapUrlToPoint(fullUrl); // Use your existing parsing function
+
+    return coords;
   } catch (error) {
     console.error("Error using Puppeteer:", error);
     return null;
@@ -126,19 +132,3 @@ async function getCoordsWithPuppeteer(url) {
 }
 
 module.exports = { convertMapUrlToPoint };
-
-// Command line interface
-if (require.main === module) {
-  const inputUrl = process.argv[2];
-  if (!inputUrl) {
-    console.error("Usage: node index.js <google-maps-url>");
-    process.exit(1);
-  }
-  
-  convertMapUrlToPoint(inputUrl).then((coords) => {
-    console.log("Result:", JSON.stringify(coords));
-  }).catch((error) => {
-    console.error("Error:", error);
-    process.exit(1);
-  });
-}
