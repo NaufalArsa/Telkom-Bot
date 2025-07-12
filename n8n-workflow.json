@@ -1,0 +1,368 @@
+{
+    "nodes": [
+      {
+        "parameters": {
+          "updates": "message"
+        },
+        "id": "Telegram Trigger",
+        "name": "Telegram Trigger",
+        "type": "n8n-nodes-base.telegramTrigger",
+        "typeVersion": 1,
+        "position": [200, 300],
+        "credentials": {
+          "telegramApi": "YOUR_TELEGRAM_CREDENTIAL"
+        }
+      },
+      {
+        "parameters": {
+          "operation": "get",
+          "key": "={{$json[\"message\"][\"from\"][\"id\"]}}"
+        },
+        "id": "Get Pending Data",
+        "name": "Get Pending Data",
+        "type": "n8n-nodes-base.dataStore",
+        "typeVersion": 1,
+        "position": [400, 300]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "string": [
+              {
+                "value1": "={{$json[\"message\"][\"text\"]}}",
+                "operation": "startsWith",
+                "value2": "/status"
+              },
+              {
+                "value1": "={{$json[\"message\"][\"text\"]}}",
+                "operation": "startsWith",
+                "value2": "/clear"
+              }
+            ]
+          }
+        },
+        "id": "IF Command",
+        "name": "IF Command",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 1,
+        "position": [600, 300]
+      },
+      {
+        "parameters": {
+          "chatId": "={{$json[\"message\"][\"chat\"][\"id\"]}}",
+          "text": "⏳ Status data sementara:\n{{$json.value ? JSON.stringify($json.value, null, 2) : 'Belum ada data pending.'}}"
+        },
+        "id": "Send Status",
+        "name": "Send Status",
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1,
+        "position": [800, 200],
+        "credentials": {
+          "telegramApi": "YOUR_TELEGRAM_CREDENTIAL"
+        }
+      },
+      {
+        "parameters": {
+          "operation": "delete",
+          "key": "={{$json[\"message\"][\"from\"][\"id\"]}}"
+        },
+        "id": "Delete Pending Data",
+        "name": "Delete Pending Data",
+        "type": "n8n-nodes-base.dataStore",
+        "typeVersion": 1,
+        "position": [800, 400]
+      },
+      {
+        "parameters": {
+          "chatId": "={{$json[\"message\"][\"chat\"][\"id\"]}}",
+          "text": "🗑️ Data sementara Anda telah dihapus."
+        },
+        "id": "Send Clear",
+        "name": "Send Clear",
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1,
+        "position": [1000, 400],
+        "credentials": {
+          "telegramApi": "YOUR_TELEGRAM_CREDENTIAL"
+        }
+      },
+      {
+        "parameters": {
+          "operation": "set",
+          "key": "={{$json[\"message\"][\"from\"][\"id\"]}}",
+          "value": "={{Object.assign($node[\"Get Pending Data\"].json.value || {},\n$message.photo ? {photo: $json[\"message\"][\"photo\"][0][\"file_id\"]} : {},\n$message.caption ? {caption: $json[\"message\"][\"caption\"]} : {},\n$message.location ? {location: $json[\"message\"][\"location\"]} : {},\n$message.text && $json[\"message\"][\"text\"].match(/maps\\.google\\.com|goo\\.gl\\/maps|maps\\.app\\.goo\\.gl/) ? {gmaps: $json[\"message\"][\"text\"]} : {})}}"
+        },
+        "id": "Update Pending Data",
+        "name": "Update Pending Data",
+        "type": "n8n-nodes-base.dataStore",
+        "typeVersion": 1,
+        "position": [800, 300]
+      },
+      {
+        "parameters": {
+          "functionCode": "const pattern = /Nama\\s+SA\\/\\s*AR:\\s*(?<nama_sa>.+?)\\n+STO:\\s*(?<sto>.+?)\\n+Cluster:\\s*(?<cluster>.+?)\\n+\\n*Nama\\s+usaha:\\s*(?<usaha>.+?)\\n+Nama\\s+PIC:\\s*(?<pic>.+?)\\n+Nomor\\s+HP\\/\\s*WA:\\s*(?<hpwa>.+?)\\n+Internet\\s+existing:\\s*(?<internet>.+?)\\n+Biaya\\s+internet\\s+existing:\\s*(?<biaya>.+?)\\n+Voice\\s+of\\s+Customer:\\s*(?<voc>.+?)(?:\\n|$)/s;\nconst cap = $json.value.caption || '';\nconst match = cap.match(pattern);\nif (match && match.groups) {\n  return [{...$json.value, ...match.groups, parsed: true}];\n}\nreturn [{...$json.value, parsed: false}];"
+        },
+        "id": "Parse Caption",
+        "name": "Parse Caption",
+        "type": "n8n-nodes-base.function",
+        "typeVersion": 1,
+        "position": [1000, 300]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "boolean": [
+              {
+                "value1": "={{$json.photo && $json.parsed && ($json.location || $json.gmaps)}}"
+              }
+            ]
+          }
+        },
+        "id": "IF Data Lengkap",
+        "name": "IF Data Lengkap",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 1,
+        "position": [1200, 300]
+      },
+      {
+        "parameters": {
+          "resource": "file",
+          "operation": "download",
+          "fileId": "={{$json.photo}}"
+        },
+        "id": "Download Photo",
+        "name": "Download Photo",
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1,
+        "position": [1400, 200],
+        "credentials": {
+          "telegramApi": "YOUR_TELEGRAM_CREDENTIAL"
+        }
+      },
+      {
+        "parameters": {
+          "resource": "file",
+          "operation": "upload",
+          "binaryData": true,
+          "fileName": "={{$json.usaha}}.jpg",
+          "parents": ["YOUR_DRIVE_FOLDER_ID"]
+        },
+        "id": "Upload to Google Drive",
+        "name": "Upload to Google Drive",
+        "type": "n8n-nodes-base.googleDrive",
+        "typeVersion": 1,
+        "position": [1600, 200],
+        "credentials": {
+          "googleApi": "YOUR_GOOGLE_DRIVE_CREDENTIAL"
+        }
+      },
+      {
+        "parameters": {
+          "sheetId": "YOUR_SHEET_ID",
+          "range": "Sheet1!A1",
+          "valueInputMode": "USER_ENTERED",
+          "options": {},
+          "values": [
+            [
+              "={{$json.nama_sa}}",
+              "={{$json.sto}}",
+              "={{$json.cluster}}",
+              "={{$json.usaha}}",
+              "={{$json.pic}}",
+              "={{$json.hpwa}}",
+              "={{$json.internet}}",
+              "={{$json.biaya}}",
+              "={{$json.voc}}",
+              "={{$json.location ? $json.location.latitude + ',' + $json.location.longitude : $json.gmaps || ''}}",
+              "={{$node[\"Upload to Google Drive\"].json[\"webViewLink\"]}}"
+            ]
+          ]
+        },
+        "id": "Add to Google Sheet",
+        "name": "Add to Google Sheet",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 1,
+        "position": [1800, 200],
+        "credentials": {
+          "googleApi": "YOUR_GOOGLE_SHEETS_CREDENTIAL"
+        }
+      },
+      {
+        "parameters": {
+          "operation": "delete",
+          "key": "={{$json[\"message\"][\"from\"][\"id\"]}}"
+        },
+        "id": "Delete Pending Data After Save",
+        "name": "Delete Pending Data After Save",
+        "type": "n8n-nodes-base.dataStore",
+        "typeVersion": 1,
+        "position": [2000, 200]
+      },
+      {
+        "parameters": {
+          "chatId": "={{$json[\"message\"][\"chat\"][\"id\"]}}",
+          "text": "✅ Data lengkap dan berhasil disimpan!\n\nNama Usaha: ={{$json.usaha}}\nLink Drive: ={{$node[\"Upload to Google Drive\"].json[\"webViewLink\"]}}"
+        },
+        "id": "Send Telegram Message Success",
+        "name": "Send Telegram Message Success",
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1,
+        "position": [2200, 200],
+        "credentials": {
+          "telegramApi": "YOUR_TELEGRAM_CREDENTIAL"
+        }
+      },
+      {
+        "parameters": {
+          "chatId": "={{$json[\"message\"][\"chat\"][\"id\"]}}",
+          "text": "⏳ Data Anda belum lengkap. Kirim foto/caption/lokasi atau link Google Maps untuk melengkapi."
+        },
+        "id": "Send Telegram Message Pending",
+        "name": "Send Telegram Message Pending",
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1,
+        "position": [1400, 400],
+        "credentials": {
+          "telegramApi": "YOUR_TELEGRAM_CREDENTIAL"
+        }
+      }
+    ],
+    "connections": {
+      "Telegram Trigger": {
+        "main": [
+          [
+            {
+              "node": "Get Pending Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Pending Data": {
+        "main": [
+          [
+            {
+              "node": "IF Command",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF Command": {
+        "main": [
+          [
+            {
+              "node": "Send Status",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Delete Pending Data",
+              "type": "main",
+              "index": 1
+            },
+            {
+              "node": "Update Pending Data",
+              "type": "main",
+              "index": 2
+            }
+          ]
+        ]
+      },
+      "Delete Pending Data": {
+        "main": [
+          [
+            {
+              "node": "Send Clear",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update Pending Data": {
+        "main": [
+          [
+            {
+              "node": "Parse Caption",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Caption": {
+        "main": [
+          [
+            {
+              "node": "IF Data Lengkap",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF Data Lengkap": {
+        "main": [
+          [
+            {
+              "node": "Download Photo",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Send Telegram Message Pending",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "Download Photo": {
+        "main": [
+          [
+            {
+              "node": "Upload to Google Drive",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upload to Google Drive": {
+        "main": [
+          [
+            {
+              "node": "Add to Google Sheet",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Add to Google Sheet": {
+        "main": [
+          [
+            {
+              "node": "Delete Pending Data After Save",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Delete Pending Data After Save": {
+        "main": [
+          [
+            {
+              "node": "Send Telegram Message Success",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  }

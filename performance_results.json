@@ -1,0 +1,46 @@
+{
+  "import_time": {
+    "local": 2.813117504119873,
+    "optimized": -1,
+    "improvement": 135.5477507973086
+  },
+  "code_metrics": {
+    "local": {
+      "total_lines": 1018,
+      "code_lines": 738,
+      "comment_lines": 119,
+      "empty_lines": 161,
+      "function_count": 11,
+      "async_function_count": 6,
+      "import_count": 20,
+      "class_count": 0,
+      "variable_count": 209,
+      "file_size_kb": 58.001953125
+    },
+    "optimized": {
+      "total_lines": 748,
+      "code_lines": 618,
+      "comment_lines": 35,
+      "empty_lines": 95,
+      "function_count": 24,
+      "async_function_count": 14,
+      "import_count": 21,
+      "class_count": 0,
+      "variable_count": 141,
+      "file_size_kb": 32.7978515625
+    }
+  },
+  "regex_performance": {
+    "local_regex_time": 0.008334875106811523,
+    "optimized_regex_time": 0.008822917938232422
+  },
+  "data_processing": {
+    "local_validation_time": 0.009332895278930664,
+    "optimized_validation_time": 0.010010957717895508
+  },
+  "memory_usage": {
+    "local": 0,
+    "optimized": 0,
+    "difference": 0
+  }
+}
