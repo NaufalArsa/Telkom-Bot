@@ -7,6 +7,7 @@ import threading
 import time
 import sys
 from datetime import datetime
+from timezone_utils import get_current_time, format_timestamp
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from dotenv import load_dotenv
@@ -338,7 +339,7 @@ def main():
                 <h3>Last Update</h3>
                 <p>{}</p>
             </div>
-            """.format(datetime.now().strftime("%Y-%m-%d %H:%M:%S")), unsafe_allow_html=True)
+            """.format(format_timestamp()), unsafe_allow_html=True)
         
         with col4:
             # Count today's records
@@ -346,7 +347,7 @@ def main():
             if df is not None and not df.empty and 'Timestamp' in df.columns:
                 try:
                     df['Timestamp'] = pd.to_datetime(df['Timestamp'])
-                    today = pd.Timestamp.now().date()
+                    today = get_current_time().date()
                     today_count = len(df[df['Timestamp'].dt.date == today])
                 except:
                     today_count = 0
