@@ -14,6 +14,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from google.oauth2.service_account import Credentials
 from supabase import create_client, Client
+from timezone_utils import get_current_time, format_timestamp
 
 # Load environment variables
 load_dotenv()
@@ -281,7 +282,7 @@ def save_to_spreadsheet(data: Dict[str, str], user_id: str, coords: str, file_li
         return False
     
     try:
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        timestamp = format_timestamp()
         no = len(sheet.get_all_values())
         
         row_data = [
@@ -367,7 +368,7 @@ async def handle_photo_only(event, user_id: str):
                     pending_data[user_id] = {
                         'data': caption_text,
                         'file_link': file_link,
-                        'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        'timestamp': format_timestamp(),
                         'file_path': file_path,
                         'type': 'complete'
                     }
@@ -389,7 +390,7 @@ async def handle_photo_only(event, user_id: str):
             pending_data[user_id] = {
                 'data': None,
                 'file_link': None,
-                'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                'timestamp': format_timestamp(),
                 'file_path': file_path,
                 'type': 'photo_only'
             }
@@ -443,7 +444,7 @@ async def handle_photo_with_caption(event, user_id: str):
             pending_data[user_id] = {
                 'data': row,
                 'file_link': file_link,
-                'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                'timestamp': format_timestamp(),
                 'file_path': file_path
             }
             
@@ -536,7 +537,7 @@ async def handle_caption_only(event, user_id: str):
                 pending_data[user_id] = {
                     'data': caption_text,
                     'file_link': file_link,
-                    'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    'timestamp': format_timestamp(),
                     'file_path': existing_photo_path,
                     'type': 'complete'
                 }
@@ -547,7 +548,7 @@ async def handle_caption_only(event, user_id: str):
             pending_data[user_id] = {
                 'data': caption_text,
                 'file_link': None,
-                'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                'timestamp': format_timestamp(),
                 'file_path': None,
                 'type': 'caption_only'
             }
