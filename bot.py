@@ -13,6 +13,7 @@ from telethon import TelegramClient, events
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from google.oauth2.service_account import Credentials
+from supabase import create_client, Client
 
 # Load environment variables
 load_dotenv()
@@ -24,27 +25,49 @@ def get_env_var(name, required=True):
     return value
 
 # Environment variables (use the same names as in bot.py)
-API_ID = int(get_env_var('API_ID'))
+API_ID = int(get_env_var('API_ID'))  # type: ignore
 API_HASH = get_env_var('API_HASH')
 BOT_TOKEN = get_env_var('BOT_TOKEN')
 DRIVE_ID = get_env_var('GOOGLE_DRIVE_FOLDER_ID')
 SHEET_NAME = get_env_var('GOOGLE_SHEET_NAME')
 NODE_SCRIPT_PATH = get_env_var('NODE_SCRIPT_PATH')
+SUPABASE_URL = get_env_var('SUPABASE_URL', required=False)  # Supabase URL
+SUPABASE_KEY = get_env_var('SUPABASE_KEY', required=False)  # Supabase anon key
+
+# Type assertions to satisfy the linter
+assert API_ID is not None
+assert API_HASH is not None
+assert BOT_TOKEN is not None
+assert DRIVE_ID is not None
+assert SHEET_NAME is not None
+assert NODE_SCRIPT_PATH is not None
 
 # Load Google credentials from environment variable
 try:
     creds_json = get_env_var('GOOGLE_CREDS_JSON')
+    assert creds_json is not None
     creds_dict = json.loads(creds_json)
     scope = [
         "https://spreadsheets.google.com/feeds",
         "https://www.googleapis.com/auth/drive"
     ]
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
-    gc = gspread.authorize(creds)
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)  # type: ignore
+    gc = gspread.authorize(creds)  # type: ignore
     sheet = gc.open(SHEET_NAME).sheet1
 except Exception as e:
     print(f"Error loading Google credentials or opening sheet: {e}")
-    exit(1)
+    # Fallback to file-based credentials like bot_optimized.py
+    try:
+        CREDENTIALS_FILE = 'gcredentials.json'
+        with open(CREDENTIALS_FILE, 'r') as f:
+            creds_dict = json.load(f)
+        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        gc = gspread.service_account(filename=CREDENTIALS_FILE)
+        sheet = gc.open(SHEET_NAME).sheet1
+        print("✅ Using file-based credentials as fallback")
+    except Exception as e2:
+        print(f"Error loading fallback credentials: {e2}")
+        exit(1)
 
 # Configure logging
 logging.basicConfig(
@@ -141,8 +164,10 @@ def extract_coords_from_gmaps_link(link: str) -> Tuple[Optional[float], Optional
         link = link.split('?', 1)[0]
 
     try:
+        # Use expand.js as fallback if NODE_SCRIPT_PATH is not set
+        script_path = NODE_SCRIPT_PATH if NODE_SCRIPT_PATH else 'expand.js'
         result = subprocess.run(
-            ['node', NODE_SCRIPT_PATH, link],
+            ['node', script_path, link],
             capture_output=True,
             text=True,
             timeout=30
@@ -163,34 +188,61 @@ def extract_coords_from_gmaps_link(link: str) -> Tuple[Optional[float], Optional
     
     return None, None
 
-def upload_to_gdrive(file_path: str) -> str:
-    """Upload file to Google Drive and return public link"""
+def upload_to_supabase(file_path: str) -> str:
+    """Upload file to Supabase storage bucket with better error handling"""
     try:
-        service = get_drive_service()
-        if not service:
-            return "Gagal upload: Drive service not available"
+        if not SUPABASE_URL or not SUPABASE_KEY:
+            logger.warning("Supabase URL or key not set")
+            return "Foto tersimpan (tanpa upload)"
         
-        file_metadata = {
-            'name': os.path.basename(file_path), 
-            'parents': [DRIVE_ID]
-        }
-        media = MediaFileUpload(file_path, resumable=True)
-        file = service.files().create(
-            body=file_metadata, 
-            media_body=media, 
-            fields='id'
-        ).execute()
+        # Initialize Supabase client
+        supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
         
-        # Make file publicly readable
-        service.permissions().create(
-            fileId=file.get('id'), 
-            body={'role': 'reader', 'type': 'anyone'}
-        ).execute()
+        # Generate unique filename
+        import uuid
+        file_extension = os.path.splitext(file_path)[1]
+        unique_filename = f"{uuid.uuid4()}{file_extension}"
         
-        return f"https://drive.google.com/uc?id={file.get('id')}"
+        # Read the image file
+        with open(file_path, 'rb') as f:
+            file_data = f.read()
+        
+        # Upload to Supabase storage bucket
+        bucket_name = "photo"
+        try:
+            logger.info(f"Uploading to bucket: {bucket_name}")
+            
+            # Upload to Supabase storage bucket
+            response = supabase.storage.from_(bucket_name).upload(
+                path=unique_filename,
+                file=file_data,
+                file_options={"content-type": "image/jpeg"}
+            )
+            
+            if response:
+                # Get public URL
+                public_url = supabase.storage.from_(bucket_name).get_public_url(unique_filename)
+                logger.info(f"Successfully uploaded to Supabase: {public_url}")
+                return public_url
+            else:
+                logger.error("Supabase upload failed: No response")
+                return "Foto tersimpan (gagal upload)"
+                
+        except Exception as upload_error:
+            error_str = str(upload_error)
+            if "row-level security policy" in error_str.lower():
+                logger.error("Supabase RLS policy blocking upload. Please disable RLS for the 'photo' bucket or create appropriate policies.")
+                return "Foto tersimpan (RLS policy blocking upload)"
+            elif "bucket not found" in error_str.lower():
+                logger.error("Supabase bucket 'photo' not found. Please create the bucket in your Supabase dashboard.")
+                return "Foto tersimpan (bucket tidak ditemukan)"
+            else:
+                logger.error(f"Supabase upload error: {upload_error}")
+                return "Foto tersimpan (error sistem)"
+            
     except Exception as e:
-        logger.error(f"Failed to upload to Google Drive: {e}")
-        return f"Gagal upload: {e}"
+        logger.error(f"Supabase upload error: {e}")
+        return "Foto tersimpan (error sistem)"
 
 def validate_caption_data(row: Dict[str, str]) -> Tuple[bool, List[str], str]:
     """Validate caption data fields"""
@@ -259,57 +311,80 @@ def extract_markdown_link(text: str) -> str:
 # Event handlers
 async def handle_photo_only(event, user_id: str):
     """Handle photo-only messages"""
-    file_path = await event.download_media()
-    
-    # Check if there's existing caption data
-    if user_id in pending_data and pending_data[user_id].get('type') == 'caption_only':
-        caption_text = pending_data[user_id]['data']
-        match = CAPTION_PATTERN.search(caption_text)
-        if match:
-            row = match.groupdict()
-            
-            # Validate data
-            is_valid, missing_fields, error_message = validate_caption_data(row)
-            if not is_valid:
-                await event.reply(error_message)
-                return
-            
-            # Check for Google Maps link
-            link_gmaps = row.get('link_gmaps', '').strip()
-            has_valid_coordinates = False
-            lat, lon = None, None
-            
-            if link_gmaps:
-                link_gmaps = extract_markdown_link(link_gmaps)
-                lat, lon = extract_coords_from_gmaps_link(link_gmaps)
-                if lat is not None and lon is not None:
-                    has_valid_coordinates = True
-            
-            if has_valid_coordinates and lat is not None and lon is not None:
-                # Process complete data
-                file_link = upload_to_gdrive(file_path)
-                location_coords, gmaps_link = process_coordinates(lat, lon)
+    try:
+        file_path = await event.download_media()
+        
+        # Check if there's existing caption data
+        if user_id in pending_data and pending_data[user_id].get('type') == 'caption_only':
+            caption_text = pending_data[user_id]['data']
+            match = CAPTION_PATTERN.search(caption_text)
+            if match:
+                row = match.groupdict()
                 
-                if save_to_spreadsheet(row, user_id, location_coords, file_link, gmaps_link):
-                    cleanup_pending_data(user_id)
-                    if os.path.exists(file_path):
-                        os.remove(file_path)
-                    await event.reply(f"✅ **SELAMAT Data berhasil disimpan!**\n\n🏢 **Nama Usaha:** {row['usaha']}\n📍 Koordinat: {lat}, {lon}\n📊 Data telah ditambahkan ke spreadsheet\n\n🎉 **Status:** Data selesai diproses")
+                # Validate data
+                is_valid, missing_fields, error_message = validate_caption_data(row)
+                if not is_valid:
+                    await event.reply(error_message)
+                    return
+                
+                # Check for Google Maps link
+                link_gmaps = row.get('link_gmaps', '').strip()
+                has_valid_coordinates = False
+                lat, lon = None, None
+                
+                if link_gmaps:
+                    link_gmaps = extract_markdown_link(link_gmaps)
+                    lat, lon = extract_coords_from_gmaps_link(link_gmaps)
+                    if lat is not None and lon is not None:
+                        has_valid_coordinates = True
+                
+                if has_valid_coordinates and lat is not None and lon is not None:
+                    # Process complete data - with error handling for Supabase upload
+                    try:
+                        file_link = upload_to_supabase(file_path)
+                    except Exception as e:
+                        logger.warning(f"Supabase upload failed, continuing without upload: {e}")
+                        file_link = "Foto tersimpan (gagal upload)"
+                    
+                    location_coords, gmaps_link = process_coordinates(lat, lon)
+                    
+                    if save_to_spreadsheet(row, user_id, location_coords, file_link, gmaps_link):
+                        cleanup_pending_data(user_id)
+                        if os.path.exists(file_path):
+                            os.remove(file_path)
+                        await event.reply(f"✅ **SELAMAT Data berhasil disimpan!**\n\n🏢 **Nama Usaha:** {row['usaha']}\n📍 Koordinat: {lat}, {lon}\n📊 Data telah ditambahkan ke spreadsheet\n\n🎉 **Status:** Data selesai diproses")
+                    else:
+                        await event.reply("❌ Gagal menyimpan ke Google Spreadsheet")
                 else:
-                    await event.reply("❌ Gagal menyimpan ke Google Spreadsheet")
+                    # Store pending data without failing if Supabase upload fails
+                    cleanup_pending_data(user_id)
+                    try:
+                        file_link = upload_to_supabase(file_path)
+                    except Exception as e:
+                        logger.warning(f"Supabase upload failed, continuing without upload: {e}")
+                        file_link = None
+                    
+                    pending_data[user_id] = {
+                        'data': caption_text,
+                        'file_link': file_link,
+                        'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        'file_path': file_path,
+                        'type': 'complete'
+                    }
+                    await event.reply("✅ **Foto dan caption telah digabung.**\n\n Data disimpan sementara.\n\n❌ **Yang masih kurang:**\n• Koordinat lokasi\n\n📍 **Langkah selanjutnya:**\n1. Share lokasi Anda sekarang, ATAU\n2. Kirim Link Google Maps")
             else:
-                # Store pending data
+                # Invalid caption format - store photo only without Drive upload attempt
                 cleanup_pending_data(user_id)
                 pending_data[user_id] = {
-                    'data': caption_text,
+                    'data': None,
                     'file_link': None,
                     'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     'file_path': file_path,
-                    'type': 'complete'
+                    'type': 'photo_only'
                 }
-                await event.reply("✅ **Foto dan caption telah digabung.**\n\n Data disimpan sementara.\n\n❌ **Yang masih kurang:**\n• Koordinat lokasi\n\n📍 **Langkah selanjutnya:**\n1. Share lokasi Anda sekarang, ATAU\n2. Kirim Link Google Maps")
+                await event.reply("⏳ **Foto disimpan sementara!**\n\nFormat caption sebelumnya tidak sesuai.\n\nSilakan kirim caption (teks) sesuai format.\n\nKetik /format untuk melihat format yang benar.")
         else:
-            # Invalid caption format
+            # Store photo only - don't try to upload to Google Drive yet
             cleanup_pending_data(user_id)
             pending_data[user_id] = {
                 'data': None,
@@ -318,149 +393,176 @@ async def handle_photo_only(event, user_id: str):
                 'file_path': file_path,
                 'type': 'photo_only'
             }
-            await event.reply("⏳ **Foto disimpan sementara!**\n\nFormat caption sebelumnya tidak sesuai.\n\nSilakan kirim caption (teks) sesuai format.\n\nKetik /format untuk melihat format yang benar.")
-    else:
-        # Store photo only
-        cleanup_pending_data(user_id)
-        pending_data[user_id] = {
-            'data': None,
-            'file_link': None,
-            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            'file_path': file_path,
-            'type': 'photo_only'
-        }
-        await event.reply("⏳ **Foto disimpan sementara!**\n\nSilakan kirim caption (teks) sesuai format.\n\nKetik /format untuk melihat format yang benar.")
+            await event.reply("⏳ **Foto disimpan sementara!**\n\nSilakan kirim caption (teks) sesuai format.\n\nKetik /format untuk melihat format yang benar.")
+            
+    except Exception as e:
+        logger.error(f"Error in handle_photo_only: {e}")
+        try:
+            await event.reply(f"❌ Terjadi error saat memproses foto: {e}")
+        except:
+            logger.error("Failed to send error message to user")
 
 async def handle_photo_with_caption(event, user_id: str):
     """Handle photo with caption messages"""
-    match = CAPTION_PATTERN.search(event.text.strip())
-    if not match:
-        await event.reply("❌ Data belum lengkap atau format caption tidak sesuai.\n\nLengkapi data atau ketik /format untuk melihat format yang benar.")
-        return
-    
-    row = match.groupdict()
-    
-    # Validate data
-    is_valid, missing_fields, error_message = validate_caption_data(row)
-    if not is_valid:
-        await event.reply(error_message)
-        return
-    
-    # Check for Google Maps link
-    link_gmaps = row.get('link_gmaps', '').strip()
-    has_valid_coordinates = False
-    lat, lon = None, None
-    
-    if link_gmaps:
-        link_gmaps = extract_markdown_link(link_gmaps)
-        lat, lon = extract_coords_from_gmaps_link(link_gmaps)
-        if lat is not None and lon is not None:
-            has_valid_coordinates = True
-    
-    if not has_valid_coordinates:
-        # Store pending data
+    try:
+        match = CAPTION_PATTERN.search(event.text.strip())
+        if not match:
+            await event.reply("❌ Data belum lengkap atau format caption tidak sesuai.\n\nLengkapi data atau ketik /format untuk melihat format yang benar.")
+            return
+        
+        row = match.groupdict()
+        
+        # Validate data
+        is_valid, missing_fields, error_message = validate_caption_data(row)
+        if not is_valid:
+            await event.reply(error_message)
+            return
+        
+        # Check for Google Maps link
+        link_gmaps = row.get('link_gmaps', '').strip()
+        has_valid_coordinates = False
+        lat, lon = None, None
+        
+        if link_gmaps:
+            link_gmaps = extract_markdown_link(link_gmaps)
+            lat, lon = extract_coords_from_gmaps_link(link_gmaps)
+            if lat is not None and lon is not None:
+                has_valid_coordinates = True
+        
+        if not has_valid_coordinates:
+            # Store pending data
+            cleanup_pending_data(user_id)
+            file_path = await event.download_media()
+            
+            try:
+                file_link = upload_to_supabase(file_path)
+            except Exception as e:
+                logger.warning(f"Supabase upload failed, continuing without upload: {e}")
+                file_link = "Foto tersimpan"
+            
+            pending_data[user_id] = {
+                'data': row,
+                'file_link': file_link,
+                'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                'file_path': file_path
+            }
+            
+            await event.reply("⏳ **Data disimpan sementara!**\n\n📋 Data Anda telah diterima tetapi belum lengkap.\n\n❌ **Yang masih kurang:**\n• Koordinat lokasi\n\n📍 **Langkah selanjutnya:**\n1. Share lokasi Anda sekarang, ATAU\n2. Kirim Link Google Maps")
+            return
+        
+        # Process complete data
         cleanup_pending_data(user_id)
         file_path = await event.download_media()
-        file_link = upload_to_gdrive(file_path)
         
-        pending_data[user_id] = {
-            'data': row,
-            'file_link': file_link,
-            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            'file_path': file_path
-        }
+        try:
+            file_link = upload_to_supabase(file_path)
+        except Exception as e:
+            logger.warning(f"Supabase upload failed, continuing without upload: {e}")
+            file_link = "Foto tersimpan"
+            
+        if lat is not None and lon is not None:
+            location_coords, gmaps_link = process_coordinates(lat, lon)
+        else:
+            location_coords, gmaps_link = "", ""
         
-        await event.reply("⏳ **Data disimpan sementara!**\n\n📋 Data Anda telah diterima tetapi belum lengkap.\n\n❌ **Yang masih kurang:**\n• Koordinat lokasi\n\n📍 **Langkah selanjutnya:**\n1. Share lokasi Anda sekarang, ATAU\n2. Kirim Link Google Maps")
-        return
-    
-    # Process complete data
-    cleanup_pending_data(user_id)
-    file_path = await event.download_media()
-    file_link = upload_to_gdrive(file_path)
-    if lat is not None and lon is not None:
-        location_coords, gmaps_link = process_coordinates(lat, lon)
-    else:
-        location_coords, gmaps_link = "", ""
-    
-    if save_to_spreadsheet(row, user_id, location_coords, file_link, gmaps_link):
-        await event.reply(f"✅ **SELAMAT Data berhasil disimpan!**\n\n🏢 **Nama Usaha:** {row['usaha']}\n📍 Koordinat: {lat}, {lon}\n📊 Data telah ditambahkan ke spreadsheet\n\n🎉 **Status:** Data selesai diproses")
-    else:
-        await event.reply("❌ Gagal menyimpan ke Google Spreadsheet")
-    
-    # Clean up temporary file
-    if os.path.exists(file_path):
-        os.remove(file_path)
+        if save_to_spreadsheet(row, user_id, location_coords, file_link, gmaps_link):
+            await event.reply(f"✅ **SELAMAT Data berhasil disimpan!**\n\n🏢 **Nama Usaha:** {row['usaha']}\n📍 Koordinat: {lat}, {lon}\n📊 Data telah ditambahkan ke spreadsheet\n\n🎉 **Status:** Data selesai diproses")
+        else:
+            await event.reply("❌ Gagal menyimpan ke Google Spreadsheet")
+        
+        # Clean up temporary file
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            
+    except Exception as e:
+        logger.error(f"Error in handle_photo_with_caption: {e}")
+        try:
+            await event.reply(f"❌ Terjadi error saat memproses foto dan caption: {e}")
+        except:
+            logger.error("Failed to send error message to user")
 
 async def handle_caption_only(event, user_id: str):
     """Handle caption-only messages"""
-    caption_text = event.text.strip()
-    match = CAPTION_PATTERN.search(caption_text)
-    if not match:
-        await event.reply("❌ Format caption tidak sesuai.\n\nKetik /format untuk melihat format yang benar.")
-        return
-    
-    row = match.groupdict()
-    is_valid, missing_fields, error_message = validate_caption_data(row)
-    if not is_valid:
-        await event.reply(error_message)
-        return
-    
-    # Check for Google Maps link
-    link_gmaps = row.get('link_gmaps', '').strip()
-    has_valid_coordinates = False
-    lat, lon = None, None
-    
-    if link_gmaps:
-        link_gmaps = extract_markdown_link(link_gmaps)
-        lat, lon = extract_coords_from_gmaps_link(link_gmaps)
-        if lat is not None and lon is not None:
-            has_valid_coordinates = True
-    
-    # Check if there's existing photo data
-    existing_photo_path = None
-    if user_id in pending_data and pending_data[user_id].get('type') == 'photo_only':
-        existing_photo_path = pending_data[user_id].get('file_path')
-    
-    if existing_photo_path and os.path.exists(existing_photo_path):
-        # Combine with existing photo
-        file_link = upload_to_gdrive(existing_photo_path)
+    try:
+        caption_text = event.text.strip()
+        match = CAPTION_PATTERN.search(caption_text)
+        if not match:
+            await event.reply("❌ Format caption tidak sesuai.\n\nKetik /format untuk melihat format yang benar.")
+            return
         
-        if has_valid_coordinates and lat is not None and lon is not None:
-            # Process complete data
-            location_coords, gmaps_link = process_coordinates(lat, lon)
+        row = match.groupdict()
+        is_valid, missing_fields, error_message = validate_caption_data(row)
+        if not is_valid:
+            await event.reply(error_message)
+            return
+        
+        # Check for Google Maps link
+        link_gmaps = row.get('link_gmaps', '').strip()
+        has_valid_coordinates = False
+        lat, lon = None, None
+        
+        if link_gmaps:
+            link_gmaps = extract_markdown_link(link_gmaps)
+            lat, lon = extract_coords_from_gmaps_link(link_gmaps)
+            if lat is not None and lon is not None:
+                has_valid_coordinates = True
+        
+        # Check if there's existing photo data
+        existing_photo_path = None
+        if user_id in pending_data and pending_data[user_id].get('type') == 'photo_only':
+            existing_photo_path = pending_data[user_id].get('file_path')
+        
+        if existing_photo_path and os.path.exists(existing_photo_path):
+            # Combine with existing photo
+            try:
+                file_link = upload_to_supabase(existing_photo_path)
+            except Exception as e:
+                logger.warning(f"Supabase upload failed, continuing without upload: {e}")
+                file_link = "Foto tersimpan"
             
-            if save_to_spreadsheet(row, user_id, location_coords, file_link, gmaps_link):
-                cleanup_pending_data(user_id)
-                if os.path.exists(existing_photo_path):
-                    os.remove(existing_photo_path)
-                await event.reply(f"✅ **SELAMAT Data berhasil disimpan!**\n\n🏢 **Nama Usaha:** {row['usaha']}\n📍 Koordinat: {lat}, {lon}\n📊 Data telah ditambahkan ke spreadsheet\n\n🎉 **Status:** Data selesai diproses")
+            if has_valid_coordinates and lat is not None and lon is not None:
+                # Process complete data
+                location_coords, gmaps_link = process_coordinates(lat, lon)
+                
+                if save_to_spreadsheet(row, user_id, location_coords, file_link, gmaps_link):
+                    cleanup_pending_data(user_id)
+                    if os.path.exists(existing_photo_path):
+                        os.remove(existing_photo_path)
+                    await event.reply(f"✅ **SELAMAT Data berhasil disimpan!**\n\n🏢 **Nama Usaha:** {row['usaha']}\n📍 Koordinat: {lat}, {lon}\n📊 Data telah ditambahkan ke spreadsheet\n\n🎉 **Status:** Data selesai diproses")
+                else:
+                    await event.reply("❌ Gagal menyimpan ke Google Spreadsheet")
             else:
-                await event.reply("❌ Gagal menyimpan ke Google Spreadsheet")
+                # Store pending data with photo
+                pending_data[user_id] = {
+                    'data': caption_text,
+                    'file_link': file_link,
+                    'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    'file_path': existing_photo_path,
+                    'type': 'complete'
+                }
+                await event.reply("✅ **Foto dan caption telah digabung.**\n\n Data disimpan sementara.\n\n❌ **Yang masih kurang:**\n• Koordinat lokasi\n\n📍 **Langkah selanjutnya:**\n1. Share lokasi Anda sekarang, ATAU\n2. Kirim Link Google Maps")
         else:
-            # Store pending data with photo
+            # Store caption only
+            cleanup_pending_data(user_id)
             pending_data[user_id] = {
                 'data': caption_text,
-                'file_link': file_link,
+                'file_link': None,
                 'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                'file_path': existing_photo_path,
-                'type': 'complete'
+                'file_path': None,
+                'type': 'caption_only'
             }
-            await event.reply("✅ **Foto dan caption telah digabung.**\n\n Data disimpan sementara.\n\n❌ **Yang masih kurang:**\n• Koordinat lokasi\n\n📍 **Langkah selanjutnya:**\n1. Share lokasi Anda sekarang, ATAU\n2. Kirim Link Google Maps")
-    else:
-        # Store caption only
-        cleanup_pending_data(user_id)
-        pending_data[user_id] = {
-            'data': caption_text,
-            'file_link': None,
-            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            'file_path': None,
-            'type': 'caption_only'
-        }
-        
-        if has_valid_coordinates:
-            await event.reply(f"⏳ **Caption disimpan sementara!**\n\n✅ Link Google Maps: Valid\n📍 Koordinat: {lat}, {lon}\n\nSilakan kirim foto yang sesuai.\n\nKetik /format untuk melihat format yang benar.")
-        else:
-            await event.reply("⏳ **Caption disimpan sementara!**\n\nSilakan kirim foto yang sesuai.")
+            
+            if has_valid_coordinates:
+                await event.reply(f"⏳ **Caption disimpan sementara!**\n\n✅ Link Google Maps: Valid\n📍 Koordinat: {lat}, {lon}\n\nSilakan kirim foto yang sesuai.\n\nKetik /format untuk melihat format yang benar.")
+            else:
+                await event.reply("⏳ **Caption disimpan sementara!**\n\nSilakan kirim foto yang sesuai.")
+                
+    except Exception as e:
+        logger.error(f"Error in handle_caption_only: {e}")
+        try:
+            await event.reply(f"❌ Terjadi error saat memproses caption: {e}")
+        except:
+            logger.error("Failed to send error message to user")
 
 async def handle_gmaps_link(event, user_id: str):
     """Handle Google Maps link messages"""
@@ -489,121 +591,152 @@ async def handle_gmaps_link(event, user_id: str):
 
 async def process_complete_data_with_coords(event, pending: Dict, user_id: str, lat: float, lon: float, link_gmaps: str):
     """Process complete data with coordinates"""
-    caption_text = pending['data']
-    match = CAPTION_PATTERN.search(caption_text)
-    if not match:
-        await event.reply("❌ Format caption tidak sesuai.\n\nKetik /format untuk melihat format yang benar.")
-        return
-    
-    row = match.groupdict()
-    is_valid, missing_fields, error_message = validate_caption_data(row)
-    if not is_valid:
-        await event.reply(error_message)
-        return
-    
-    file_path = pending['file_path']
-    file_link = upload_to_gdrive(file_path)
-    location_coords, gmaps_link = process_coordinates(lat, lon)
-    
-    if save_to_spreadsheet(row, user_id, location_coords, file_link, gmaps_link):
-        cleanup_pending_data(user_id)
-        if os.path.exists(file_path):
-            os.remove(file_path)
-        await event.reply(f"✅ **SELAMAT Data berhasil disimpan ke spreadsheet!**\n\n🏢 **Nama Usaha:** {row['usaha']}\n📍 Koordinat: {lat}, {lon}\n📊 Data lengkap telah ditambahkan\n\n🎉 **Status:** Data selesai diproses")
-    else:
-        await event.reply("❌ Gagal menyimpan ke Google Spreadsheet")
-
-async def process_caption_only_with_coords(event, pending: Dict, user_id: str, lat: float, lon: float, link_gmaps: str):
-    """Process caption-only data with coordinates"""
-    caption_text = pending['data']
-    match = CAPTION_PATTERN.search(caption_text)
-    if not match:
-        await event.reply("❌ Format caption tidak sesuai.\n\nKetik /format untuk melihat format yang benar.")
-        return
-    
-    row = match.groupdict()
-    is_valid, missing_fields, error_message = validate_caption_data(row)
-    if not is_valid:
-        await event.reply(error_message)
-        return
-    
-    location_coords, gmaps_link = process_coordinates(lat, lon)
-    
-    if save_to_spreadsheet(row, user_id, location_coords, "Tidak ada foto", gmaps_link):
-        cleanup_pending_data(user_id)
-        await event.reply(f"✅ **SELAMAT Data berhasil disimpan ke spreadsheet!**\n\n🏢 **Nama Usaha:** {row['usaha']}\n📍 Koordinat: {lat}, {lon}\n📊 Data telah ditambahkan (tanpa foto)\n\n🎉 **Status:** Data selesai diproses")
-    else:
-        await event.reply("❌ Gagal menyimpan ke Google Spreadsheet")
-
-async def process_other_data_with_coords(event, pending: Dict, user_id: str, lat: float, lon: float, link_gmaps: str):
-    """Process other data types with coordinates"""
-    if 'data' not in pending or not pending['data']:
-        await event.reply("❌ Data tidak lengkap.\n\nSilakan kirim foto dan caption terlebih dahulu.")
-        return
-    
-    if isinstance(pending['data'], dict):
-        row = pending['data']
+    try:
+        caption_text = pending['data']
+        match = CAPTION_PATTERN.search(caption_text)
+        if not match:
+            await event.reply("❌ Format caption tidak sesuai.\n\nKetik /format untuk melihat format yang benar.")
+            return
+        
+        row = match.groupdict()
         is_valid, missing_fields, error_message = validate_caption_data(row)
         if not is_valid:
             await event.reply(error_message)
             return
         
-        file_path = pending.get('file_path')
-        file_link = pending.get('file_link', 'Gagal upload')
+        file_path = pending['file_path']
+        
+        try:
+            file_link = upload_to_supabase(file_path)
+        except Exception as e:
+            logger.warning(f"Supabase upload failed, continuing without upload: {e}")
+            file_link = "Foto tersimpan"
+            
         location_coords, gmaps_link = process_coordinates(lat, lon)
         
         if save_to_spreadsheet(row, user_id, location_coords, file_link, gmaps_link):
             cleanup_pending_data(user_id)
-            if file_path and os.path.exists(file_path):
+            if os.path.exists(file_path):
                 os.remove(file_path)
             await event.reply(f"✅ **SELAMAT Data berhasil disimpan ke spreadsheet!**\n\n🏢 **Nama Usaha:** {row['usaha']}\n📍 Koordinat: {lat}, {lon}\n📊 Data lengkap telah ditambahkan\n\n🎉 **Status:** Data selesai diproses")
         else:
             await event.reply("❌ Gagal menyimpan ke Google Spreadsheet")
-    else:
-        await event.reply("❌ Format data tidak sesuai.\n\nSilakan kirim ulang data dengan format yang benar.")
+    except Exception as e:
+        logger.error(f"Error in process_complete_data_with_coords: {e}")
+        await event.reply("❌ Terjadi error saat memproses data. Silakan coba lagi.")
+
+async def process_caption_only_with_coords(event, pending: Dict, user_id: str, lat: float, lon: float, link_gmaps: str):
+    """Process caption-only data with coordinates"""
+    try:
+        caption_text = pending['data']
+        match = CAPTION_PATTERN.search(caption_text)
+        if not match:
+            await event.reply("❌ Format caption tidak sesuai.\n\nKetik /format untuk melihat format yang benar.")
+            return
+        
+        row = match.groupdict()
+        is_valid, missing_fields, error_message = validate_caption_data(row)
+        if not is_valid:
+            await event.reply(error_message)
+            return
+        
+        location_coords, gmaps_link = process_coordinates(lat, lon)
+        
+        if save_to_spreadsheet(row, user_id, location_coords, "Tidak ada foto", gmaps_link):
+            cleanup_pending_data(user_id)
+            await event.reply(f"✅ **SELAMAT Data berhasil disimpan ke spreadsheet!**\n\n🏢 **Nama Usaha:** {row['usaha']}\n📍 Koordinat: {lat}, {lon}\n📊 Data telah ditambahkan (tanpa foto)\n\n🎉 **Status:** Data selesai diproses")
+        else:
+            await event.reply("❌ Gagal menyimpan ke Google Spreadsheet")
+    except Exception as e:
+        logger.error(f"Error in process_caption_only_with_coords: {e}")
+        await event.reply("❌ Terjadi error saat memproses data. Silakan coba lagi.")
+
+async def process_other_data_with_coords(event, pending: Dict, user_id: str, lat: float, lon: float, link_gmaps: str):
+    """Process other data types with coordinates"""
+    try:
+        if 'data' not in pending or not pending['data']:
+            await event.reply("❌ Data tidak lengkap.\n\nSilakan kirim foto dan caption terlebih dahulu.")
+            return
+        
+        if isinstance(pending['data'], dict):
+            row = pending['data']
+            is_valid, missing_fields, error_message = validate_caption_data(row)
+            if not is_valid:
+                await event.reply(error_message)
+                return
+            
+            file_path = pending.get('file_path')
+            file_link = pending.get('file_link', 'Gagal upload')
+            
+            # Try to upload if we have a file path
+            if file_path and os.path.exists(file_path):
+                try:
+                    file_link = upload_to_supabase(file_path)
+                except Exception as e:
+                    logger.warning(f"Supabase upload failed, continuing without upload: {e}")
+                    file_link = "Foto tersimpan"
+            
+            location_coords, gmaps_link = process_coordinates(lat, lon)
+            
+            if save_to_spreadsheet(row, user_id, location_coords, file_link, gmaps_link):
+                cleanup_pending_data(user_id)
+                if file_path and os.path.exists(file_path):
+                    os.remove(file_path)
+                await event.reply(f"✅ **SELAMAT Data berhasil disimpan ke spreadsheet!**\n\n🏢 **Nama Usaha:** {row['usaha']}\n📍 Koordinat: {lat}, {lon}\n📊 Data lengkap telah ditambahkan\n\n🎉 **Status:** Data selesai diproses")
+            else:
+                await event.reply("❌ Gagal menyimpan ke Google Spreadsheet")
+        else:
+            await event.reply("❌ Format data tidak sesuai.\n\nSilakan kirim ulang data dengan format yang benar.")
+    except Exception as e:
+        logger.error(f"Error in process_other_data_with_coords: {e}")
+        await event.reply("❌ Terjadi error saat memproses data. Silakan coba lagi.")
 
 async def handle_location_share(event, user_id: str):
     """Handle location sharing"""
-    latitude = event.message.geo.lat
-    longitude = event.message.geo.long
-    
-    if user_id in pending_data:
-        pending = pending_data[user_id]
-        data_type = pending.get('type', 'unknown')
+    try:
+        latitude = event.message.geo.lat
+        longitude = event.message.geo.long
         
-        if data_type == 'complete':
-            await process_complete_data_with_coords(event, pending, user_id, latitude, longitude, "")
-        elif data_type == 'caption_only':
-            await process_caption_only_with_coords(event, pending, user_id, latitude, longitude, "")
-        elif data_type == 'photo_only':
-            await event.reply("❌ Data belum lengkap.\n\nSilakan kirim caption terlebih dahulu.")
-        else:
-            await process_other_data_with_coords(event, pending, user_id, latitude, longitude, "")
-    else:
-        # Update existing data in spreadsheet
-        try:
-            expected_headers = [
-                'No', 'Timestamp', 'ID', 'Nama', 'STO', 'Cluster', 'Nama Usaha', 
-                'PIC', 'HP/WA', 'Internet Existing', 'Biaya Internet', 'VOC', 
-                'Lokasi', 'Foto', 'Link Gmaps', 'Validitas'
-            ]
-            records = sheet.get_all_records(expected_headers=expected_headers)
-            row_idx = None
-            for idx, row in enumerate(records, start=2):
-                if str(row.get('ID', '')) == user_id:
-                    row_idx = idx
-                    break
+        if user_id in pending_data:
+            pending = pending_data[user_id]
+            data_type = pending.get('type', 'unknown')
             
-            if row_idx:
-                location_coords, gmaps_link = process_coordinates(latitude, longitude)
-                sheet.update_cell(row_idx, 13, location_coords)
-                sheet.update_cell(row_idx, 15, gmaps_link)
-                await event.reply(f"✅ **Koordinat berhasil ditambahkan!**\n\n📍 Lokasi: {latitude}, {longitude}\n📊 Data telah dilengkapi dengan koordinat")
+            if data_type == 'complete':
+                await process_complete_data_with_coords(event, pending, user_id, latitude, longitude, "")
+            elif data_type == 'caption_only':
+                await process_caption_only_with_coords(event, pending, user_id, latitude, longitude, "")
+            elif data_type == 'photo_only':
+                await event.reply("❌ Data belum lengkap.\n\nSilakan kirim caption terlebih dahulu.")
             else:
-                await event.reply("❌ **Tidak dapat menambahkan koordinat!**\n\nTidak ditemukan data sebelumnya untuk user ini.\n\n📋 **Langkah yang benar:**\n1. Kirim data dengan Link Google Maps yang valid, ATAU\n2. Kirim data tanpa Link Gmaps, kemudian share lokasi")
-        except Exception as e:
-            logger.error(f"Failed to update location in spreadsheet: {e}")
-            await event.reply(f"❌ Gagal menyimpan lokasi ke Google Spreadsheet: {e}")
+                await process_other_data_with_coords(event, pending, user_id, latitude, longitude, "")
+        else:
+            # Update existing data in spreadsheet
+            try:
+                expected_headers = [
+                    'No', 'Timestamp', 'ID', 'Nama', 'STO', 'Cluster', 'Nama Usaha', 
+                    'PIC', 'HP/WA', 'Internet Existing', 'Biaya Internet', 'VOC', 
+                    'Lokasi', 'Foto', 'Link Gmaps', 'Validitas'
+                ]
+                records = sheet.get_all_records(expected_headers=expected_headers)
+                row_idx = None
+                for idx, row in enumerate(records, start=2):
+                    if str(row.get('ID', '')) == user_id:
+                        row_idx = idx
+                        break
+                
+                if row_idx:
+                    location_coords, gmaps_link = process_coordinates(latitude, longitude)
+                    sheet.update_cell(row_idx, 13, location_coords)
+                    sheet.update_cell(row_idx, 15, gmaps_link)
+                    await event.reply(f"✅ **Koordinat berhasil ditambahkan!**\n\n📍 Lokasi: {latitude}, {longitude}\n📊 Data telah dilengkapi dengan koordinat")
+                else:
+                    await event.reply("❌ **Tidak dapat menambahkan koordinat!**\n\nTidak ditemukan data sebelumnya untuk user ini.\n\n📋 **Langkah yang benar:**\n1. Kirim data dengan Link Google Maps yang valid, ATAU\n2. Kirim data tanpa Link Gmaps, kemudian share lokasi")
+            except Exception as e:
+                logger.error(f"Failed to update location in spreadsheet: {e}")
+                await event.reply(f"❌ Gagal menyimpan lokasi ke Google Spreadsheet: {e}")
+    except Exception as e:
+        logger.error(f"Error in handle_location_share: {e}")
+        await event.reply("❌ Terjadi error saat memproses lokasi. Silakan coba lagi.")
 
 # Main event handler
 @client.on(events.NewMessage(incoming=True))
@@ -638,7 +771,10 @@ async def handler(event):
             
     except Exception as e:
         logger.error(f"Error in main handler: {e}")
-        await event.reply(f"❌ Terjadi error pada bot: {e}")
+        try:
+            await event.reply(f"❌ Terjadi error pada bot: {e}")
+        except:
+            logger.error("Failed to send error message to user")
 
 # Command handlers
 @client.on(events.NewMessage(pattern=r'^/format$', incoming=True))
@@ -772,17 +908,17 @@ async def clear_handler(event):
 
 # Main execution
 if __name__ == "__main__":
-    logger.info("🚀 Bot is starting...")
+    logger.info("Bot is starting...")
     logger.info(f"API ID: {API_ID}")
-    logger.info(f"Bot Token: {BOT_TOKEN[:10]}...")
+    logger.info(f"Bot Token: {BOT_TOKEN[:10] if BOT_TOKEN else 'None'}...")
     logger.info(f"Drive ID: {DRIVE_ID}")
     logger.info(f"Sheet Name: {SHEET_NAME}")
     
     try:
-        logger.info("✅ Bot is running...")
+        logger.info("Bot is running...")
         client.run_until_disconnected()
     except KeyboardInterrupt:
-        logger.info("🛑 Bot stopped by user")
+        logger.info("Bot stopped by user")
     except Exception as e:
-        logger.error(f"❌ Fatal error: {e}")
+        logger.error(f"Fatal error: {e}")
         raise

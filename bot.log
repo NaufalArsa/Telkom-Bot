@@ -1,0 +1,26 @@
+2025-07-13 20:21:08,775 - telethon.network.mtprotosender - INFO - Connecting to 149.154.167.51:443/TcpFull...
+2025-07-13 20:21:11,032 - telethon.network.mtprotosender - INFO - Connection to 149.154.167.51:443/TcpFull complete!
+2025-07-13 20:21:12,576 - telethon.client.users - INFO - Phone migrated to 5
+2025-07-13 20:21:12,577 - telethon.client.telegrambaseclient - INFO - Reconnecting to new data center 5
+2025-07-13 20:21:12,838 - telethon.network.mtprotosender - INFO - Disconnecting from 149.154.167.51:443/TcpFull...
+2025-07-13 20:21:12,838 - telethon.network.mtprotosender - INFO - Disconnection from 149.154.167.51:443/TcpFull complete!
+2025-07-13 20:21:12,838 - telethon.network.mtprotosender - INFO - Connecting to 91.108.56.134:443/TcpFull...
+2025-07-13 20:21:14,133 - telethon.network.mtprotosender - INFO - Connection to 91.108.56.134:443/TcpFull complete!
+2025-07-13 20:21:14,437 - __main__ - INFO - Bot is starting...
+2025-07-13 20:21:14,437 - __main__ - INFO - API ID: 29586893
+2025-07-13 20:21:14,437 - __main__ - INFO - Bot Token: 7234638021...
+2025-07-13 20:21:14,437 - __main__ - INFO - Drive ID: 118MghjEj1lQGx3xht7v_2yMwS84z96q0
+2025-07-13 20:21:14,437 - __main__ - INFO - Sheet Name: Recap Visit YOVI
+2025-07-13 20:21:14,437 - __main__ - INFO - Bot is running...
+2025-07-13 20:21:33,554 - telethon.client.downloads - INFO - Starting direct file download in chunks of 131072 at 0, stride 131072
+2025-07-13 20:21:40,445 - __main__ - INFO - Uploading to bucket: photo
+2025-07-13 20:21:41,174 - httpx - INFO - HTTP Request: POST https://zxybbinronjeovwtgnib.supabase.co/storage/v1/object/photo/4d544093-7054-4303-aa9e-a7f2c44dda4b.jpg "HTTP/2 200 OK"
+2025-07-13 20:21:41,174 - __main__ - INFO - Successfully uploaded to Supabase: https://zxybbinronjeovwtgnib.supabase.co/storage/v1/object/public/photo/4d544093-7054-4303-aa9e-a7f2c44dda4b.jpg?
+2025-07-13 20:22:12,328 - __main__ - INFO - Uploading to bucket: photo
+2025-07-13 20:22:13,422 - httpx - INFO - HTTP Request: POST https://zxybbinronjeovwtgnib.supabase.co/storage/v1/object/photo/0b418174-0c29-4d22-aeab-f536d946f4e1.jpg "HTTP/2 200 OK"
+2025-07-13 20:22:13,423 - __main__ - INFO - Successfully uploaded to Supabase: https://zxybbinronjeovwtgnib.supabase.co/storage/v1/object/public/photo/0b418174-0c29-4d22-aeab-f536d946f4e1.jpg?
+2025-07-13 20:22:14,135 - __main__ - INFO - Successfully saved data for user 1205303292
+2025-07-13 20:22:14,136 - __main__ - INFO - Cleaned up temporary file: photo_2025-07-13_13-21-32.jpg
+2025-07-13 20:24:47,760 - telethon.network.mtprotosender - INFO - Disconnecting from 91.108.56.134:443/TcpFull...
+2025-07-13 20:24:47,761 - telethon.network.mtprotosender - INFO - Disconnection from 91.108.56.134:443/TcpFull complete!
+2025-07-13 20:24:47,765 - telethon.network.mtprotosender - INFO - Not disconnecting (already have no connection)

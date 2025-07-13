@@ -1,3 +1,5 @@
 .env
 bot.session 
 gcredentials.json
+bot_local.py
+bot_optimized.py
