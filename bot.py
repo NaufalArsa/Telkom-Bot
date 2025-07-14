@@ -155,38 +155,53 @@ def get_gmaps_link_from_coords(lat: float, lon: float) -> str:
     """Generate Google Maps link from coordinates"""
     return f"https://www.google.com/maps?q={lat},{lon}"
 
+def extract_lat_lng_from_short_url(short_url):
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
+    try:
+        response = requests.get(short_url, headers=headers, allow_redirects=True, timeout=10)
+        html = response.text
+        match = re.search(r"https://www\\.google\\.com/maps/preview/place/.*?@(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)", html)
+        if match:
+            lat, lng = match.groups()
+            return float(lat), float(lng)
+    except Exception as e:
+        logger.error(f"Error extracting lat/lng from short url: {e}")
+    return None, None
+
 def extract_coords_from_gmaps_link(link: str) -> Tuple[Optional[float], Optional[float]]:
-    """Extract latitude and longitude from Google Maps link using Node.js"""
+    """Extract latitude and longitude from Google Maps link using Python only (no Node.js fallback)"""
     if not link or not link.strip():
         return None, None
-    
-    # Clean the link
-    if '?' in link:
-        link = link.split('?', 1)[0]
+    link = link.strip()
 
-    try:
-        # Use expand.js as fallback if NODE_SCRIPT_PATH is not set
-        script_path = NODE_SCRIPT_PATH if NODE_SCRIPT_PATH else 'expand.js'
-        result = subprocess.run(
-            ['node', script_path, link],
-            capture_output=True,
-            text=True,
-            timeout=30
-        )
-        
-        for line in result.stdout.splitlines():
-            if line.startswith("Result:"):
-                coords_str = line.replace("Result:", "").strip()
-                try:
-                    coords = json.loads(coords_str.replace("'", '"'))
-                    if coords and 'latitude' in coords and 'longitude' in coords:
-                        return coords['latitude'], coords['longitude']
-                except Exception as e:
-                    logger.error(f"Error parsing coordinates: {e}")
-                    continue
-    except Exception as e:
-        logger.error(f"Error calling Node.js script: {e}")
-    
+    # Try to extract directly from URL (long form)
+    patterns = [
+        r'@(-?\d+\.\d+),(-?\d+\.\d+)',
+        r'q=(-?\d+\.\d+),(-?\d+\.\d+)',
+        r'lat=(-?\d+\.\d+)&lng=(-?\d+\.\d+)',
+        r'lat=(-?\d+\.\d+)&lon=(-?\d+\.\d+)',
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, link)
+        if match:
+            try:
+                lat = float(match.group(1))
+                lon = float(match.group(2))
+                logger.info(f"Extracted coordinates from URL pattern: {lat}, {lon}")
+                return lat, lon
+            except (ValueError, IndexError):
+                continue
+
+    # If it's a short URL, try to extract from HTML preview
+    if any(domain in link for domain in ['maps.app.goo.gl', 'goo.gl/maps']):
+        lat, lon = extract_lat_lng_from_short_url(link)
+        if lat is not None and lon is not None:
+            logger.info(f"Extracted coordinates from short URL HTML: {lat}, {lon}")
+            return lat, lon
+
+    logger.warning(f"Failed to extract coordinates from link: {link}")
     return None, None
 
 def upload_to_supabase(file_path: str) -> str:
