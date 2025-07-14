@@ -155,53 +155,37 @@ def get_gmaps_link_from_coords(lat: float, lon: float) -> str:
     """Generate Google Maps link from coordinates"""
     return f"https://www.google.com/maps?q={lat},{lon}"
 
-def extract_lat_lng_from_short_url(short_url):
-    headers = {
-        "User-Agent": "Mozilla/5.0"
-    }
+def extract_coords_from_gmaps_link(link: str) -> Tuple[Optional[float], Optional[float]]:
+    """Extract latitude and longitude from Google Maps short or long link purely in Python."""
+    if not link or not link.strip():
+        return None, None
+
     try:
-        response = requests.get(short_url, headers=headers, allow_redirects=True, timeout=10)
+        # follow redirects to get the final URL page
+        headers = {
+            "User-Agent": "Mozilla/5.0"
+        }
+        response = requests.get(link, headers=headers, allow_redirects=True, timeout=10)
         html = response.text
-        match = re.search(r"https://www\\.google\\.com/maps/preview/place/.*?@(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)", html)
+
+        # Try to extract lat,lng from embed or preview URLs
+        match = re.search(
+            r"https://www\.google\.com/maps/preview/place/.*?@(-?\d+\.\d+),(-?\d+\.\d+)",
+            html
+        )
         if match:
             lat, lng = match.groups()
             return float(lat), float(lng)
+
+        # fallback: try plain lat,lng patterns in URL or page
+        match2 = re.search(r"@(-?\d+\.\d+),(-?\d+\.\d+)", html)
+        if match2:
+            lat, lng = match2.groups()
+            return float(lat), float(lng)
+
     except Exception as e:
-        logger.error(f"Error extracting lat/lng from short url: {e}")
-    return None, None
+        logger.error(f"Error extracting coordinates from link {link}: {e}")
 
-def extract_coords_from_gmaps_link(link: str) -> Tuple[Optional[float], Optional[float]]:
-    """Extract latitude and longitude from Google Maps link using Python only (no Node.js fallback)"""
-    if not link or not link.strip():
-        return None, None
-    link = link.strip()
-
-    # Try to extract directly from URL (long form)
-    patterns = [
-        r'@(-?\d+\.\d+),(-?\d+\.\d+)',
-        r'q=(-?\d+\.\d+),(-?\d+\.\d+)',
-        r'lat=(-?\d+\.\d+)&lng=(-?\d+\.\d+)',
-        r'lat=(-?\d+\.\d+)&lon=(-?\d+\.\d+)',
-    ]
-    for pattern in patterns:
-        match = re.search(pattern, link)
-        if match:
-            try:
-                lat = float(match.group(1))
-                lon = float(match.group(2))
-                logger.info(f"Extracted coordinates from URL pattern: {lat}, {lon}")
-                return lat, lon
-            except (ValueError, IndexError):
-                continue
-
-    # If it's a short URL, try to extract from HTML preview
-    if any(domain in link for domain in ['maps.app.goo.gl', 'goo.gl/maps']):
-        lat, lon = extract_lat_lng_from_short_url(link)
-        if lat is not None and lon is not None:
-            logger.info(f"Extracted coordinates from short URL HTML: {lat}, {lon}")
-            return lat, lon
-
-    logger.warning(f"Failed to extract coordinates from link: {link}")
     return None, None
 
 def upload_to_supabase(file_path: str) -> str:
