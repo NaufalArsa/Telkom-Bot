@@ -252,9 +252,7 @@ def main():
         'API_ID': os.getenv('API_ID'),
         'API_HASH': os.getenv('API_HASH'),
         'BOT_TOKEN': os.getenv('BOT_TOKEN'),
-        'GOOGLE_DRIVE_FOLDER_ID': os.getenv('GOOGLE_DRIVE_FOLDER_ID'),
         'GOOGLE_SHEET_NAME': os.getenv('GOOGLE_SHEET_NAME'),
-        'NODE_SCRIPT_PATH': os.getenv('NODE_SCRIPT_PATH'),
         'GOOGLE_CREDS_JSON': os.getenv('GOOGLE_CREDS_JSON'),
         'SUPABASE_URL': os.getenv('SUPABASE_URL'),
         'SUPABASE_KEY': os.getenv('SUPABASE_KEY')
@@ -525,9 +523,8 @@ def main():
             "API_ID": os.getenv('API_ID', 'Not set'),
             "API_HASH": os.getenv('API_HASH', 'Not set')[:10] + "..." if os.getenv('API_HASH') else 'Not set',
             "BOT_TOKEN": os.getenv('BOT_TOKEN', 'Not set')[:10] + "..." if os.getenv('BOT_TOKEN') else 'Not set',
-            "GOOGLE_DRIVE_FOLDER_ID": os.getenv('GOOGLE_DRIVE_FOLDER_ID', 'Not set'),
             "GOOGLE_SHEET_NAME": os.getenv('GOOGLE_SHEET_NAME', 'Not set'),
-            "NODE_SCRIPT_PATH": os.getenv('NODE_SCRIPT_PATH', 'Not set'),
+            "GOOGLE_CREDS_JSON": os.getenv('GOOGLE_CREDS_JSON', 'Not set'),
             "SUPABASE_URL": os.getenv('SUPABASE_URL', 'Not set'),
             "SUPABASE_KEY": os.getenv('SUPABASE_KEY', 'Not set')[:10] + "..." if os.getenv('SUPABASE_KEY') else 'Not set'
         }
