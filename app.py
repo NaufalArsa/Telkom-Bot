@@ -541,15 +541,6 @@ def main():
             st.text("Python Version: Unable to determine")
         st.text(f"Streamlit Version: {st.__version__}")
         st.text(f"Working Directory: {os.getcwd()}")
-        
-        # File status
-        st.subheader("📁 File Status")
-        files = ['bot.py', '.env', 'bot.log', 'gcredentials.json']
-        for file in files:
-            if os.path.exists(file):
-                st.success(f"✅ {file}")
-            else:
-                st.error(f"❌ {file}")
 
     # Check if bot process has terminated
     if st.session_state.bot_process:
