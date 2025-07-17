@@ -15,6 +15,9 @@ from googleapiclient.http import MediaFileUpload
 from google.oauth2.service_account import Credentials
 from supabase import create_client, Client
 from timezone_utils import get_current_time, format_timestamp
+from geopy.distance import geodesic
+from io import BytesIO
+import pandas as pd
 
 # Load environment variables
 load_dotenv()
@@ -837,7 +840,7 @@ async def start_handler(event):
     if event.is_private:
         user_id = str(event.sender_id)
         cleanup_pending_data(user_id)
-        await event.reply("🤖 **Selamat datang di bot YOVI!**\n\nBot siap menerima data.\n\n📋 **Cara mengisi data:**\n\n1. Kirim foto terlebih dahulu, ATAU\n2. Kirim caption terlebih dahulu\n3. Kemudian kirim bagian yang kurang\n4. Share lokasi atau kirim Link Google Maps\n\n💡 **Command yang tersedia:**\n• /format - Format pengisian data\n• /help - Bantuan lengkap\n• /status - Cek status data sementara\n• /clear - Hapus data sementara")
+        await event.reply("🤖 **Selamat datang di bot YOVI!**\n\nBot siap menerima data.\n\n📋 **Cara mengisi data:**\n\n1. Kirim foto terlebih dahulu, ATAU\n2. Kirim caption terlebih dahulu\n3. Kemudian kirim bagian yang kurang\n4. Share lokasi atau kirim Link Google Maps\n\n💡 **Command yang tersedia:**\n• /format - Format pengisian data\n• /help - Bantuan lengkap\n• /status - Cek status data sementara\n• /clear - Hapus data sementara\n• /odp - Cari 5 ODP terdekat dari lokasi Anda\n\n🚩 **Langkah khusus /odp:**\n1. Ketik /odp\n2. Kirim link Google Maps atau share lokasi Anda\n3. Bot akan membalas 5 ODP terdekat dari lokasi yang Anda kirimkan.")
         user_started[user_id] = True
 
 @client.on(events.NewMessage(pattern=r'^/status$', incoming=True))
@@ -905,6 +908,92 @@ async def clear_handler(event):
         
         cleanup_pending_data(user_id)
         await event.reply("Silakan kirim data baru.")
+
+# State user untuk fitur /odp
+odp_user_state = {}  # user_id: True jika sedang menunggu lokasi untuk /odp
+
+def get_odp_dataframe_from_supabase():
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        logger.error("Supabase credentials not set")
+        return None
+    try:
+        supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+        bucket_name = "odp"
+        files = supabase.storage.from_(bucket_name).list()
+        if not files or len(files) == 0:
+            logger.error("No ODP file found in bucket")
+            return None
+        filename = files[0]['name'] if isinstance(files[0], dict) else str(files[0])
+        response = supabase.storage.from_(bucket_name).download(filename)
+        file_bytes = response  # response sudah bytes
+        df = pd.read_csv(BytesIO(file_bytes))
+        return df
+    except Exception as e:
+        logger.error(f"Failed to download/read ODP file from Supabase: {e}")
+        return None
+
+def format_odp_result(nearest_5):
+    msg = "\n=== 5 ODP Terdekat ===\n"
+    for i, row in enumerate(nearest_5.itertuples(index=False), 1):
+        odp = getattr(row, 'ODP')
+        lat = getattr(row, 'LATITUDE')
+        lon = getattr(row, 'LONGITUDE')
+        dist = getattr(row, 'DISTANCE_KM')
+        odp_maps = f"https://www.google.com/maps?q={lat},{lon}"
+        msg += f"{i}. {odp} | {lat:.6f},{lon:.6f} | {dist:.2f} km | [Lihat di Maps]({odp_maps})\n"
+    return msg
+
+async def process_odp_nearest(event, user_id, lat, lon):
+    user_maps = f"https://www.google.com/maps?q={lat},{lon}"
+    await event.reply(f"📍 Lokasi Anda: {lat:.6f}, {lon:.6f}\n🔗 [Lihat di Google Maps]({user_maps})\n\nSedang mencari 5 ODP terdekat ...", parse_mode='markdown')
+    df = get_odp_dataframe_from_supabase()
+    if df is None:
+        await event.reply("❌ Gagal mengambil data ODP dari Supabase.")
+        return
+    if not all(col in df.columns for col in ["ODP", "LATITUDE", "LONGITUDE"]):
+        await event.reply("❌ Data ODP tidak valid (kolom tidak lengkap).")
+        return
+    try:
+        user_location = (lat, lon)
+        locations = df[["ODP", "LATITUDE", "LONGITUDE"]].dropna()
+        locations["DISTANCE_KM"] = locations.apply(
+            lambda row: geodesic(user_location, (row["LATITUDE"], row["LONGITUDE"])).km,
+            axis=1
+        )
+        nearest_5 = locations.sort_values(by="DISTANCE_KM").head(5)  # type: ignore
+        msg = format_odp_result(nearest_5)
+        await event.reply(msg, parse_mode='markdown')
+    except Exception as e:
+        await event.reply(f"❌ Gagal menghitung jarak ODP: {e}")
+
+@client.on(events.NewMessage(pattern=r'^/odp$', incoming=True))
+async def odp_command_handler(event):
+    if event.is_private:
+        user_id = str(event.sender_id)
+        odp_user_state[user_id] = True
+        await event.reply("Silakan kirim link Google Maps atau share lokasi Anda untuk mencari ODP terdekat.")
+
+# Tambahkan pengecekan state di awal handler gmaps dan lokasi
+old_handle_gmaps_link = handle_gmaps_link
+async def handle_gmaps_link_with_odp(event, user_id: str):
+    lat, lon = extract_coords_from_gmaps_link(event.text.strip())
+    if odp_user_state.get(user_id):
+        await process_odp_nearest(event, user_id, lat, lon)
+        odp_user_state[user_id] = False
+        return
+    await old_handle_gmaps_link(event, user_id)
+globals()['handle_gmaps_link'] = handle_gmaps_link_with_odp
+
+old_handle_location_share = handle_location_share
+async def handle_location_share_with_odp(event, user_id: str):
+    latitude = event.message.geo.lat
+    longitude = event.message.geo.long
+    if odp_user_state.get(user_id):
+        await process_odp_nearest(event, user_id, latitude, longitude)
+        odp_user_state[user_id] = False
+        return
+    await old_handle_location_share(event, user_id)
+globals()['handle_location_share'] = handle_location_share_with_odp
 
 # Main execution
 if __name__ == "__main__":
