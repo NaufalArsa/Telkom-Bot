@@ -7,7 +7,8 @@ A comprehensive Telegram bot with a Streamlit web dashboard for managing and mon
 ### Bot Features
 - **Telegram Bot Integration**: Handles photo and text messages
 - **Google Sheets Integration**: Automatically saves data to Google Sheets
-- **Supabase Storage**: Uploads photos to Supabase storage
+- **Potensi & ODP Lookup**: Finds nearest Potensi (Hotel, Perusahaan, Tempat Wisata, Industri, Cafe/Restaurant, Rumah Sakit) and ODP using data from Google Sheets tabs
+- **Supabase Storage (Image Only)**: Uploads photos to Supabase storage (tabular data now uses Google Sheets)
 - **Location Processing**: Extracts coordinates from Google Maps links using Python
 - **Data Validation**: Validates required fields before saving
 - **Multi-step Data Collection**: Allows users to send data in parts
@@ -16,7 +17,7 @@ A comprehensive Telegram bot with a Streamlit web dashboard for managing and mon
 - **Real-time Monitoring**: Monitor bot status and activities
 - **Data Visualization**: View and analyze collected data
 - **Bot Controls**: Start/stop bot from web interface
-- **Storage Management**: Manage Supabase storage files
+- **Storage Management**: Manage Supabase storage files (images only)
 - **Environment Management**: Monitor configuration status
 
 ## 🚀 Quick Start
@@ -24,7 +25,7 @@ A comprehensive Telegram bot with a Streamlit web dashboard for managing and mon
 ### Prerequisites
 - Python 3.8+
 - Google Cloud Project with APIs enabled
-- Supabase project
+- Supabase project (for image storage)
 
 ### Installation
 
@@ -51,7 +52,7 @@ BOT_TOKEN=your_bot_token
 GOOGLE_SHEET_NAME=your_google_sheet_name
 GOOGLE_CREDS_JSON={"type": "service_account", ...}
 
-# Supabase Configuration
+# Supabase Configuration (for image/photo storage only)
 SUPABASE_URL=your_supabase_url
 SUPABASE_KEY=your_supabase_anon_key
 ```
@@ -61,6 +62,9 @@ SUPABASE_KEY=your_supabase_anon_key
    - Enable Google Sheets API
    - Create a service account and download credentials
    - Share your Google Sheet with the service account email
+   - **Create additional tabs in your Google Sheet:**
+     - `Hotel`, `Perusahaan`, `Tempat Wisata`, `Industri`, `Cafe/Restaurant`, `Rumah Sakit`, `ODP`
+     - Each tab should have appropriate headers (see Data Format section)
 
 5. **Set up Supabase**
    - Create a Supabase project
@@ -100,8 +104,8 @@ python bot.py
 - **Google Maps Link Processor**: Test coordinate extraction
 
 ### 2. Storage Management
-- **Supabase Storage**: View and manage uploaded files
-- **File Operations**: Download, delete, view files
+- **Supabase Storage**: View and manage uploaded image files
+- **File Operations**: Download, delete, view image files
 - **Storage Analytics**: File count and usage
 
 ### 3. Settings
@@ -120,8 +124,8 @@ python bot.py
 | `BOT_TOKEN` | Telegram Bot Token | ✅ |
 | `GOOGLE_SHEET_NAME` | Google Sheet name | ✅ |
 | `GOOGLE_CREDS_JSON` | Google service account credentials | ✅ |
-| `SUPABASE_URL` | Supabase project URL | ✅ |
-| `SUPABASE_KEY` | Supabase anon key | ✅ |
+| `SUPABASE_URL` | Supabase project URL (for image/photo storage only) | ✅ |
+| `SUPABASE_KEY` | Supabase anon key (for image/photo storage only) | ✅ |
 
 ### Google Services Setup
 
@@ -140,6 +144,9 @@ python bot.py
    - Create a new Google Sheet
    - Share it with the service account email (with Editor access)
    - Note the sheet name for `GOOGLE_SHEET_NAME`
+   - **Add tabs for Potensi and ODP:**
+     - `Hotel`, `Perusahaan`, `Tempat Wisata`, `Industri`, `Cafe/Restaurant`, `Rumah Sakit`, `ODP`
+     - Each tab should have headers such as: `Nama`, `Kab/Kota`, `Alamat`, `No. Telp`, `Gmaps`, `Lat`, `Long`, `Lokasi` (for Potensi) and `ODP`, `LATITUDE`, `LONGITUDE`, `AVAI` (for ODP)
 
 ### Supabase Setup
 
@@ -162,6 +169,8 @@ python bot.py
 | `/help` | Show help information |
 | `/status` | Check current data status |
 | `/clear` | Clear pending data |
+| `/potensi` | Cari potensi terdekat dari Google Sheets (Hotel, Perusahaan, dll) |
+| `/odp` | Cari ODP terdekat dari Google Sheets tab ODP |
 
 ## 📋 Data Format
 
@@ -179,6 +188,20 @@ Nomor HP/ WA: [Phone Number]
 Internet existing: [Internet Status]
 Biaya internet existing: [Cost]
 Voice of Customer: [VOC]
+```
+
+**Potensi Sheet Example:**
+```
+| Nama | Kab/Kota | Alamat | No. Telp | Gmaps | Lat | Long | Lokasi |
+|------|----------|--------|----------|-------|-----|------|--------|
+| Hotel ABC | Jakarta | Jl. Sudirman | 021-123456 | link | -6.123 | 106.456 | detail |
+```
+
+**ODP Sheet Example:**
+```
+| ODP | LATITUDE | LONGITUDE | AVAI |
+|-----|----------|-----------|------|
+| ODP-001 | -6.123 | 106.456 | 2 |
 ```
 
 ## 🛠️ Development
@@ -220,9 +243,9 @@ streamlit/
 2. **Dashboard not loading data**
    - Verify Google Sheet permissions
    - Check service account access
-   - Ensure sheet name is correct
+   - Ensure sheet name and tab names are correct
 
-3. **Upload failures**
+3. **Upload failures (images only)**
    - Check Supabase storage permissions
    - Verify bucket exists and is named "photo"
    - Check internet connection

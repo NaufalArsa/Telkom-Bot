@@ -545,38 +545,6 @@ def main():
                                     st.rerun()
                                 else:
                                     st.error(f"❌ {error_msg}")
-        
-        # --- Upload file ODP ke Supabase bucket 'odp' ---
-        st.subheader("⬆️ Upload File ODP ke Supabase")
-        uploaded_odp_file = st.file_uploader("Upload file ODP (CSV/Excel)", type=["csv", "xlsx"], key="odp_uploader")
-        if uploaded_odp_file is not None:
-            if st.button("Upload ke Supabase", key="upload_odp_supabase_btn"):
-                with st.spinner("Uploading file to Supabase bucket 'odp'..."):
-                    success, error_msg = upload_odp_to_supabase(uploaded_odp_file, uploaded_odp_file.name)
-                    if success:
-                        st.success(f"✅ File '{uploaded_odp_file.name}' uploaded to Supabase bucket 'odp'!")
-                        st.rerun()
-                    else:
-                        st.error(f"❌ {error_msg}")
-        # --- Daftar file ODP di Supabase ---
-        st.subheader("📁 File ODP di Supabase")
-        odp_files, odp_error = list_odp_supabase_files()
-        if odp_error:
-            st.error(f"❌ {odp_error}")
-        elif not odp_files:
-            st.info("📭 Tidak ada file ODP di Supabase bucket 'odp'")
-        else:
-            st.success(f"📊 Ditemukan {len(odp_files)} file ODP di Supabase bucket 'odp'")
-            filenames = [file['name'] if isinstance(file, dict) else str(file) for file in odp_files]
-            selected_odp_file = st.selectbox("Pilih file ODP untuk dikelola:", filenames, key="select_odp_file")
-            if selected_odp_file:
-                if st.button("🗑️ Hapus File ODP di Supabase", key="delete_odp_file_supabase"):
-                    success, error_msg = delete_odp_supabase_file(selected_odp_file)
-                    if success:
-                        st.success(f"✅ File ODP '{selected_odp_file}' dihapus dari Supabase!")
-                        st.rerun()
-                    else:
-                        st.error(f"❌ {error_msg}")
     
     with tab3:
         st.header("⚙️ Settings")

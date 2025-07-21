@@ -6,18 +6,21 @@ from handlers.data_handlers import DataHandlers
 from handlers.location_handlers import LocationHandlers
 from handlers.command_handlers import CommandHandlers
 from handlers.odp_handlers import ODPHandlers
+from handlers.potensi_handlers import PotensiHandlers
+from utils.location import extract_coords_from_gmaps_link
 
 # Setup logging
 logger = setup_logging()
 
 # Initialize client
-client = TelegramClient('bot', API_ID, API_HASH).start(bot_token=BOT_TOKEN)  # type: ignore
+client = TelegramClient('bot', API_ID, API_HASH) # type: ignore
 
 # Initialize handlers
 data_handlers = DataHandlers()
 location_handlers = LocationHandlers()
 command_handlers = CommandHandlers()
 odp_handlers = ODPHandlers()
+potensi_handlers = PotensiHandlers(client)
 
 # Data storage
 pending_data: Dict[str, Dict] = {}
@@ -26,6 +29,7 @@ user_started: Dict[str, bool] = {}
 # Main event handler
 @client.on(events.NewMessage(incoming=True))
 async def handler(event):
+    
     try:
         if not event.is_private:
             return
@@ -48,13 +52,22 @@ async def handler(event):
             await data_handlers.handle_photo_with_caption(event, user_id, pending_data)
         elif event.text and not event.photo:
             if 'maps.google.com' in event.text or 'goo.gl/maps' in event.text or 'maps.app.goo.gl' in event.text:
-                # Check ODP state first
+                # Check potensi state first
+                if await potensi_handlers.handle_gmaps_link_with_potensi(event, user_id):
+                    return
+                # Check ODP state
                 if not await odp_handlers.handle_gmaps_link_with_odp(event, user_id):
                     await location_handlers.handle_gmaps_link(event, user_id, pending_data)
             else:
+                # Check if user is selecting potensi category
+                if await potensi_handlers.handle_category_selection(event, user_id):
+                    return
                 await data_handlers.handle_caption_only(event, user_id, pending_data)
         elif hasattr(event.message, "geo") and event.message.geo:
-            # Check ODP state first
+            # Check potensi state first
+            if await potensi_handlers.handle_location_share_with_potensi(event, user_id):
+                return
+            # Check ODP state
             if not await odp_handlers.handle_location_share_with_odp(event, user_id):
                 await location_handlers.handle_location_share(event, user_id, pending_data)
             
@@ -90,6 +103,10 @@ async def clear_handler(event):
 async def odp_command_handler(event):
     await odp_handlers.odp_command_handler(event)
 
+@client.on(events.NewMessage(pattern=r'^/potensi$', incoming=True))
+async def potensi_command_handler(event):
+    await potensi_handlers.potensi_command_handler(event)
+
 # Main execution
 if __name__ == "__main__":
     logger.info("Bot is starting...")
@@ -98,6 +115,7 @@ if __name__ == "__main__":
     
     try:
         logger.info("Bot is running...")
+        client.start(bot_token=BOT_TOKEN) # type: ignore
         client.run_until_disconnected()
     except KeyboardInterrupt:
         logger.info("Bot stopped by user")

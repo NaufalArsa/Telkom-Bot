@@ -82,4 +82,44 @@ class GoogleSheetsService:
                 return False
         except Exception as e:
             logger.error(f"Failed to update location in spreadsheet: {e}")
-            return False 
+            return False
+
+    def get_sheet_data(self, spreadsheet_id: str, sheet_name: str):
+        """Get data from a specific sheet in a Google Spreadsheet"""
+        try:
+            # Get credentials
+            creds_dict, scope = load_google_credentials()
+            creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)  # type: ignore
+            gc = gspread.authorize(creds)  # type: ignore
+            
+            # Open the spreadsheet and get the specific sheet
+            spreadsheet = gc.open_by_key(spreadsheet_id)  # type: ignore
+            worksheet = spreadsheet.worksheet(sheet_name)  # type: ignore
+            
+            # Get all data from the sheet
+            data = worksheet.get_all_values()
+            return data
+            
+        except Exception as e:
+            logger.error(f"Error getting data from sheet {sheet_name}: {e}")
+            return None
+
+    def get_sheet_data_by_name(self, spreadsheet_name: str, sheet_name: str):
+        """Get data from a specific sheet by name within the same spreadsheet"""
+        try:
+            # Get credentials
+            creds_dict, scope = load_google_credentials()
+            creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)  # type: ignore
+            gc = gspread.authorize(creds)  # type: ignore
+            
+            # Open the spreadsheet by name and get the specific sheet
+            spreadsheet = gc.open(spreadsheet_name)  # type: ignore
+            worksheet = spreadsheet.worksheet(sheet_name)  # type: ignore
+            
+            # Get all data from the sheet
+            data = worksheet.get_all_values()
+            return data
+            
+        except Exception as e:
+            logger.error(f"Error getting data from sheet {sheet_name} in {spreadsheet_name}: {e}")
+            return None 

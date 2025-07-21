@@ -69,25 +69,3 @@ class SupabaseService:
         except Exception as e:
             logger.error(f"Supabase upload error: {e}")
             return "Foto tersimpan (error sistem)"
-    
-    def get_odp_dataframe(self) -> Optional[pd.DataFrame]:
-        """Get ODP data from Supabase storage"""
-        if not self.client:
-            logger.error("Supabase client not available")
-            return None
-        
-        try:
-            bucket_name = "odp"
-            files = self.client.storage.from_(bucket_name).list()
-            if not files or len(files) == 0:
-                logger.error("No ODP file found in bucket")
-                return None
-            
-            filename = files[0]['name'] if isinstance(files[0], dict) else str(files[0])
-            response = self.client.storage.from_(bucket_name).download(filename)
-            file_bytes = response  # response sudah bytes
-            df = pd.read_csv(BytesIO(file_bytes))
-            return df
-        except Exception as e:
-            logger.error(f"Failed to download/read ODP file from Supabase: {e}")
-            return None 

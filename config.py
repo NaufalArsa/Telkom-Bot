@@ -16,9 +16,7 @@ def get_env_var(name, required=True):
 API_ID = int(get_env_var('API_ID'))  # type: ignore
 API_HASH = get_env_var('API_HASH')
 BOT_TOKEN = get_env_var('BOT_TOKEN')
-DRIVE_ID = get_env_var('GOOGLE_DRIVE_FOLDER_ID')
 SHEET_NAME = get_env_var('GOOGLE_SHEET_NAME')
-NODE_SCRIPT_PATH = get_env_var('NODE_SCRIPT_PATH')
 SUPABASE_URL = get_env_var('SUPABASE_URL', required=False)
 SUPABASE_KEY = get_env_var('SUPABASE_KEY', required=False)
 
@@ -26,9 +24,7 @@ SUPABASE_KEY = get_env_var('SUPABASE_KEY', required=False)
 assert API_ID is not None
 assert API_HASH is not None
 assert BOT_TOKEN is not None
-assert DRIVE_ID is not None
 assert SHEET_NAME is not None
-assert NODE_SCRIPT_PATH is not None
 
 # Column indices for spreadsheet
 COLUMNS = {

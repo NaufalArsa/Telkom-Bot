@@ -64,6 +64,11 @@ class CommandHandlers:
                 "1. Ketik /odp\n"
                 "2. Kirim link Google Maps atau share lokasi Anda\n" 
                 "3. Bot akan membalas 5 ODP terdekat dari lokasi yang Anda kirimkan.\n\n"
+                "💡 **Langkah khusus /potensi:**\n"
+                "1. Ketik /potensi\n"
+                "2. Pilih kategori\n"
+                "3. Kirim link Google Maps atau share lokasi Anda\n" 
+                "4. Bot akan membalas 5 Potensi terdekat dari lokasi yang Anda kirimkan.\n\n"
                 "📝 **FORMAT DATA:**\n"
                 "Ketik /format untuk melihat format yang benar"
             )
@@ -74,7 +79,20 @@ class CommandHandlers:
         if event.is_private:
             user_id = str(event.sender_id)
             self.data_handlers.cleanup_pending_data(user_id, pending_data)
-            await event.reply("🤖 **Selamat datang di bot YOVI!**\n\nBot siap menerima data.\n\n📋 **Cara mengisi data:**\n\n1. Kirim foto terlebih dahulu, ATAU\n2. Kirim caption terlebih dahulu\n3. Kemudian kirim bagian yang kurang\n4. Share lokasi atau kirim Link Google Maps\n\n💡 **Command yang tersedia:**\n• /format - Format pengisian data\n• /help - Bantuan lengkap\n• /status - Cek status data sementara\n• /clear - Hapus data sementara\n• /odp - Cari 5 ODP terdekat dari lokasi Anda.")
+            await event.reply("🤖 **Selamat datang di bot YOVI!**\n\n"
+                            "Bot siap menerima data.\n\n"
+                            "📋 **Cara mengisi data:**\n\n"
+                            "1. Kirim foto terlebih dahulu, ATAU\n"
+                            "2. Kirim caption terlebih dahulu\n"
+                            "3. Kemudian kirim bagian yang kurang\n"
+                            "4. Share lokasi atau kirim Link Google Maps\n\n"
+                            "💡 **Command yang tersedia:**\n"
+                            "• /format - Format pengisian data\n"
+                            "• /help - Bantuan lengkap\n"
+                            "• /status - Cek status data sementara\n"
+                            "• /clear - Hapus data sementara\n"
+                            "• /odp - Cari 5 ODP terdekat dari lokasi Anda.\n"
+                            "• /potensi - Cari 5 Potensi terdekat dari lokasi Anda.")
             user_started[user_id] = True
     
     async def status_handler(self, event, user_started: Dict, pending_data: Dict):
