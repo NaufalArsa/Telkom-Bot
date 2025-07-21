@@ -14,10 +14,10 @@ class PotensiService:
 
     def get_potensi_dataframe(self, kategori):
         # Get data from Google Sheets - same spreadsheet, different sheets
-        # Sheet names: Hotel, Perusahaan, Tempat Wisata, Industri, Cafe/Restaurant, Rumah Sakit
+        # Sheet names: Hotel, Manufaktur, Tempat Wisata, Industri, Cafe/Restaurant, Rumah Sakit
         if kategori.lower() == "semua":
             dfs = []
-            for cat in ["Hotel", "Perusahaan", "Tempat Wisata", "Industri", "Cafe/Restaurant", "Rumah Sakit"]:
+            for cat in ["Hotel", "Manufaktur", "Tempat Wisata", "Industri", "Cafe/Restaurant", "Rumah Sakit"]:
                 df = self.get_sheet_data(cat)
                 if df is not None and not df.empty:
                     dfs.append(df)
@@ -34,7 +34,7 @@ class PotensiService:
         # Map category names to sheet names
         category_mapping = {
             "hotel": "Hotel",
-            "perusahaan": "Perusahaan", 
+            "manufaktur": "Manufaktur", 
             "tempat wisata": "Tempat Wisata",
             "industri": "Industri",
             "cafe/restaurant": "Cafe/Restaurant",

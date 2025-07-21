@@ -86,7 +86,7 @@ class PotensiHandlers:
         """Handle /potensi command"""
         if event.is_private:
             categories = [
-                "Hotel", "Perusahaan", "Tempat Wisata", "Industri", "Cafe/Restaurant", "Rumah Sakit", "Semua"
+                "Hotel", "Manufaktur", "Tempat Wisata", "Industri", "Cafe/Restaurant", "Rumah Sakit", "Semua"
             ]
             # Satu tombol per baris (reply keyboard)
             buttons = [[Button.text(cat)] for cat in categories]
@@ -124,7 +124,7 @@ class PotensiHandlers:
         """Handle category selection for potensi"""
         text = event.text.strip()
         categories = [
-            "Hotel", "Perusahaan", "Tempat Wisata", "Industri", "Cafe/Restaurant", "Rumah Sakit", "Semua"
+            "Hotel", "Manufaktur", "Tempat Wisata", "Industri", "Cafe/Restaurant", "Rumah Sakit", "Semua"
         ]
         
         if text in categories:
