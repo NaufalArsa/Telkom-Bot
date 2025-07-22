@@ -69,6 +69,9 @@ class CommandHandlers:
                 "2. Pilih kategori\n"
                 "3. Kirim link Google Maps atau share lokasi Anda\n" 
                 "4. Bot akan membalas 5 Potensi terdekat dari lokasi yang Anda kirimkan.\n\n"
+                "🔍 **Langkah khusus /psb:**\n"
+                "1. Ketik /psb dikkuti dengan nama customer. Contoh /psb Batubara\n"
+                "2. Bot akan mmeberikan 5 data PSB terkait.\n\n"
                 "📝 **FORMAT DATA:**\n"
                 "Ketik /format untuk melihat format yang benar"
             )
@@ -92,7 +95,8 @@ class CommandHandlers:
                             "• /status - Cek status data sementara\n"
                             "• /clear - Hapus data sementara\n"
                             "• /odp - Cari 5 ODP terdekat dari lokasi Anda.\n"
-                            "• /potensi - Cari 5 Potensi terdekat dari lokasi Anda.")
+                            "• /potensi - Cari 5 Potensi terdekat dari lokasi Anda.\n"
+                            "• /psb - Cari 5 PSB terkait dengan nama customer.")
             user_started[user_id] = True
     
     async def status_handler(self, event, user_started: Dict, pending_data: Dict):
