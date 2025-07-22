@@ -7,6 +7,7 @@ from handlers.location_handlers import LocationHandlers
 from handlers.command_handlers import CommandHandlers
 from handlers.odp_handlers import ODPHandlers
 from handlers.potensi_handlers import PotensiHandlers
+from handlers.psb_handlers import PSBHandlers
 from utils.location import extract_coords_from_gmaps_link
 
 # Setup logging
@@ -21,6 +22,7 @@ location_handlers = LocationHandlers()
 command_handlers = CommandHandlers()
 odp_handlers = ODPHandlers()
 potensi_handlers = PotensiHandlers(client)
+psb_handlers = PSBHandlers(client)
 
 # Data storage
 pending_data: Dict[str, Dict] = {}
