@@ -10,7 +10,7 @@ def get_gmaps_link_from_coords(lat: float, lon: float) -> str:
     return f"https://www.google.com/maps?q={lat},{lon}"
 
 def extract_coords_from_gmaps_link(link: str) -> Tuple[Optional[float], Optional[float]]:
-    """Extract latitude and longitude from Google Maps short or long link. Fallback to Selenium if needed."""
+    """Extract latitude and longitude from Google Maps short or long link."""
     if not link or not link.strip():
         return None, None
     try:
@@ -18,7 +18,7 @@ def extract_coords_from_gmaps_link(link: str) -> Tuple[Optional[float], Optional
         headers = {
             "User-Agent": "Mozilla/5.0"
         }
-        response = requests.get(link, headers=headers, allow_redirects=True, timeout=10)
+        response = requests.get(link, headers=headers, allow_redirects=True, timeout=20)
         html = response.text
         # Try to extract lat,lng from embed or preview URLs
         match = re.search(
