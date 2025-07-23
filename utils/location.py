@@ -18,8 +18,9 @@ def extract_coords_from_gmaps_link(link: str) -> Tuple[Optional[float], Optional
         headers = {
             "User-Agent": "Mozilla/5.0"
         }
-        response = requests.get(link, headers=headers, allow_redirects=True, timeout=10)
+        response = requests.get(link, headers=headers, allow_redirects=True, timeout=50)
         html = response.text
+        logger.info(f"HTML: {html}")
         # Try to extract lat,lng from embed or preview URLs
         match = re.search(
             r"https://www\.google\.com/maps/preview/place/.*?@(-?\d+\.\d+),(-?\d+\.\d+)",
@@ -30,7 +31,7 @@ def extract_coords_from_gmaps_link(link: str) -> Tuple[Optional[float], Optional
             return float(lat), float(lng)
         # fallback: try plain lat,lng patterns in URL or page
         final_url = response.url
-        match2 = re.search(r"@(-?\d+\.\d+),(-?\d+\.\d+)", final_url)
+        match2 = re.search(r"[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)", final_url)
         if match2:
             lat, lng = match2.groups()
             return float(lat), float(lng)
