@@ -9,6 +9,8 @@ from handlers.odp_handlers import ODPHandlers
 from handlers.potensi_handlers import PotensiHandlers
 from handlers.psb_handlers import PSBHandlers
 from utils.location import extract_coords_from_gmaps_link
+from services.google_sheets import GoogleSheetsService
+import time
 
 # Setup logging
 logger = setup_logging()
@@ -28,6 +30,44 @@ psb_handlers = PSBHandlers(client)
 pending_data: Dict[str, Dict] = {}
 user_started: Dict[str, bool] = {}
 
+# Cache for allowed Telegram IDs
+allowed_telegram_ids = set()
+last_id_fetch_time = 0
+ID_FETCH_INTERVAL = 60  # seconds
+
+def fetch_allowed_telegram_ids():
+    global allowed_telegram_ids, last_id_fetch_time
+    now = time.time()
+    if now - last_id_fetch_time < ID_FETCH_INTERVAL and allowed_telegram_ids:
+        return allowed_telegram_ids
+    try:
+        gs = GoogleSheetsService()
+        from config import SHEET_NAME
+        data = gs.get_sheet_data_by_name(SHEET_NAME, "Credentials")
+        if data and len(data) > 1:
+            headers = data[0]
+            rows = data[1:]
+            id_col = None
+            for i, h in enumerate(headers):
+                if h.strip().lower() in ["telegram id", "telegram_id", "id telegram", "id"]:
+                    id_col = i
+                    break
+            if id_col is not None:
+                allowed_telegram_ids = set(str(row[id_col]).strip() for row in rows if row[id_col])
+                last_id_fetch_time = now
+                return allowed_telegram_ids
+    except Exception as e:
+        logger.error(f"Failed to fetch allowed Telegram IDs: {e}")
+    return allowed_telegram_ids
+
+async def is_user_allowed(event):
+    user_id = str(event.sender_id)
+    allowed_ids = fetch_allowed_telegram_ids()
+    if user_id not in allowed_ids:
+        await event.reply("❌ Anda tidak terdaftar sebagai user bot. Silakan hubungi admin.")
+        return False
+    return True
+
 # Main event handler
 @client.on(events.NewMessage(incoming=True))
 async def handler(event):
@@ -40,6 +80,11 @@ async def handler(event):
         
         # Handle commands
         if event.text and event.text.startswith('/'):
+            # Jangan balas pesan di sini, biar command handler yang handle
+            return
+        
+        # Tambahkan pengecekan user di sini!
+        if not await is_user_allowed(event):
             return
         
         # Check if user has started
@@ -83,31 +128,53 @@ async def handler(event):
 # Command handlers
 @client.on(events.NewMessage(pattern=r'^/format$', incoming=True))
 async def format_handler(event):
+    if not await is_user_allowed(event):
+        return
     await command_handlers.format_handler(event)
 
 @client.on(events.NewMessage(pattern=r'^/help$', incoming=True))
 async def help_handler(event):
+    if not await is_user_allowed(event):
+        return
     await command_handlers.help_handler(event)
 
 @client.on(events.NewMessage(pattern=r'^/start$', incoming=True))
 async def start_handler(event):
+    if not await is_user_allowed(event):
+        return
     await command_handlers.start_handler(event, user_started, pending_data)
 
 @client.on(events.NewMessage(pattern=r'^/status$', incoming=True))
 async def status_handler(event):
+    if not await is_user_allowed(event):
+        return
     await command_handlers.status_handler(event, user_started, pending_data)
 
 @client.on(events.NewMessage(pattern=r'^/clear$', incoming=True))
 async def clear_handler(event):
+    if not await is_user_allowed(event):
+        return
     await command_handlers.clear_handler(event, user_started, pending_data)
 
 @client.on(events.NewMessage(pattern=r'^/odp$', incoming=True))
 async def odp_command_handler(event):
+    if not await is_user_allowed(event):
+        return
     await odp_handlers.odp_command_handler(event)
 
 @client.on(events.NewMessage(pattern=r'^/potensi$', incoming=True))
 async def potensi_command_handler(event):
+    if not await is_user_allowed(event):
+        return
     await potensi_handlers.potensi_command_handler(event)
+
+@client.on(events.NewMessage(pattern=r'^/psb$', incoming=True))
+async def psb_handler(event):
+    if not event.is_private:
+        return
+    if not await is_user_allowed(event):
+        return
+    await psb_handlers.psb_command_handler(event)
 
 # Main execution
 if __name__ == "__main__":

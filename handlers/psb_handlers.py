@@ -1,5 +1,4 @@
 import logging
-from telethon import events
 from services.google_sheets import GoogleSheetsService
 from config import SHEET_NAME
 import pandas as pd
@@ -11,7 +10,6 @@ class PSBHandlers:
         self.client = client
         self.google_sheets_service = GoogleSheetsService()
         self.spreadsheet_name = SHEET_NAME
-        self.register_handlers()
 
     def get_psb_dataframe(self):
         try:
@@ -37,13 +35,10 @@ class PSBHandlers:
         return matches
 
     def format_psb_result(self, row):
-        # Format a single row (Series) as a message
         main_fields = [
             "CUSTOMER NAME", "STO", "NOMOR INTERNET", "POTS", 
             "INSTALL ADDRESS", "PACKAGE NAME", "LAST UPDATED DATE"
         ]
-        
-        # Emoji Map
         field_emojis = {
             "CUSTOMER NAME": "👤",
             "STO": "🏢",
@@ -53,14 +48,10 @@ class PSBHandlers:
             "PACKAGE NAME": "📦",
             "LAST UPDATED DATE": "🕒"
         }
-
-        # Header
         msg = (
             "<b>📄 Hasil Pencarian PSB</b>\n"
             "━━━━━━━━━━━━━━━━━━━━━━\n"
         )
-
-        # Main Fields
         for field in main_fields:
             val = row.get(field, "-")
             emoji = field_emojis.get(field, "•")
@@ -69,8 +60,6 @@ class PSBHandlers:
                 msg += f"{emoji} <b>{val}</b>\n"
             else:
                 msg += f"{emoji} <b>{display_name}</b>: {val}\n"
-
-        # Other Fields (if any)
         other_fields = [col for col in row.index if col not in main_fields]
         if other_fields:
             msg += "\n<b>📌 Detail Tambahan:</b>\n"
@@ -78,30 +67,25 @@ class PSBHandlers:
                 val = row.get(col, "-")
                 display_name = col.title().replace("_", " ")
                 msg += f"• <b>{display_name}</b>: {val}\n"
-
-        # Footer (optional)
         msg += "━━━━━━━━━━━━━━━━━━━━━━"
         return msg
 
-    def register_handlers(self):
-        @self.client.on(events.NewMessage(pattern=r"^/psb( .+)?$", incoming=True))
-        async def psb_handler(event):
-            if not event.is_private:
-                return
-            text = event.text.strip()
-            if len(text.split(" ", 1)) < 2:
-                await event.reply("Silakan gunakan format: /psb [CUSTOMER NAME]")
-                return
-            customer_name = text.split(" ", 1)[1].strip()
-            df = self.get_psb_dataframe()
-            if df is None or df.empty:
-                await event.reply("❌ Data PSB tidak ditemukan.")
-                return
-            matches = self.search_by_customer_name(df, customer_name)
-            if matches is None or matches.empty:
-                await event.reply(f"❌ Tidak ada data PSB untuk nama: {customer_name}")
-                return
-            # Kirim hasil pertama (atau semua jika ingin)
-            for _, row in matches.head(5).iterrows():
-                msg = self.format_psb_result(row)
-                await event.reply(msg, parse_mode="html") 
+    async def psb_command_handler(self, event):
+        if not event.is_private:
+            return
+        text = event.text.strip()
+        if len(text.split(" ", 1)) < 2:
+            await event.reply("Silakan gunakan format: /psb [CUSTOMER NAME]")
+            return
+        customer_name = text.split(" ", 1)[1].strip()
+        df = self.get_psb_dataframe()
+        if df is None or df.empty:
+            await event.reply("❌ Data PSB tidak ditemukan.")
+            return
+        matches = self.search_by_customer_name(df, customer_name)
+        if matches is None or matches.empty:
+            await event.reply(f"❌ Tidak ada data PSB untuk nama: {customer_name}")
+            return
+        for _, row in matches.head(5).iterrows():
+            msg = self.format_psb_result(row)
+            await event.reply(msg, parse_mode="html") 
