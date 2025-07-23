@@ -30,8 +30,8 @@ def extract_coords_from_gmaps_link(link: str) -> Tuple[Optional[float], Optional
             lat, lng = match.groups()
             return float(lat), float(lng)
         # fallback: try plain lat,lng patterns in URL or page
-        final_url = response.url
-        match2 = re.search(r"[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)", final_url)
+        full_url = response.url
+        match2 = re.search(r"[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)", full_url)
         if match2:
             lat, lng = match2.groups()
             return float(lat), float(lng)
