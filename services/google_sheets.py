@@ -82,7 +82,7 @@ class GoogleSheetsService:
                 return False
         except Exception as e:
             logger.error(f"Failed to update location in spreadsheet: {e}")
-            return False
+            return False 
 
     def get_sheet_data(self, spreadsheet_id: str, sheet_name: str):
         """Get data from a specific sheet in a Google Spreadsheet"""
