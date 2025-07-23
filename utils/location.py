@@ -14,13 +14,15 @@ def extract_lat_lng_with_selenium(short_url: str) -> Tuple[Optional[float], Opti
     try:
         from selenium import webdriver
         from selenium.webdriver.chrome.options import Options
+        from selenium.webdriver.chrome.service import Service
         from webdriver_manager.chrome import ChromeDriverManager
         import time
         options = Options()
         options.add_argument("--headless")
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
-        driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+        service = Service(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service, options=options)
         driver.get(short_url)
         time.sleep(3)  # Wait for redirect and JS
         current_url = driver.current_url
