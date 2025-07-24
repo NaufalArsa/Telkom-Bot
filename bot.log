@@ -1,0 +1,87 @@
+2025-07-24 15:21:08,794 - services.supabase_service - INFO - Supabase client initialized
+2025-07-24 15:21:10,684 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:21:10,876 - services.supabase_service - INFO - Supabase client initialized
+2025-07-24 15:21:12,877 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:21:13,057 - services.supabase_service - INFO - Supabase client initialized
+2025-07-24 15:21:14,749 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:21:16,247 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:21:18,028 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:21:19,716 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:21:19,717 - config - INFO - Bot is starting...
+2025-07-24 15:21:19,717 - config - INFO - API ID: 28687000
+2025-07-24 15:21:19,717 - config - INFO - Bot Token: 7698897448...
+2025-07-24 15:21:19,717 - config - INFO - Bot is running...
+2025-07-24 15:21:19,731 - telethon.network.mtprotosender - INFO - Connecting to 149.154.167.51:443/TcpFull...
+2025-07-24 15:21:21,587 - telethon.network.mtprotosender - INFO - Connection to 149.154.167.51:443/TcpFull complete!
+2025-07-24 15:21:23,234 - telethon.client.users - INFO - Phone migrated to 5
+2025-07-24 15:21:23,234 - telethon.client.telegrambaseclient - INFO - Reconnecting to new data center 5
+2025-07-24 15:21:23,473 - telethon.network.mtprotosender - INFO - Disconnecting from 149.154.167.51:443/TcpFull...
+2025-07-24 15:21:23,474 - telethon.network.mtprotosender - INFO - Disconnection from 149.154.167.51:443/TcpFull complete!
+2025-07-24 15:21:23,474 - telethon.network.mtprotosender - INFO - Connecting to 91.108.56.151:443/TcpFull...
+2025-07-24 15:21:25,052 - telethon.network.mtprotosender - INFO - Connection to 91.108.56.151:443/TcpFull complete!
+2025-07-24 15:21:40,182 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:23:39,195 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:24:07,726 - telethon.network.mtprotosender - INFO - Disconnecting from 91.108.56.151:443/TcpFull...
+2025-07-24 15:24:07,727 - telethon.network.mtprotosender - INFO - Disconnection from 91.108.56.151:443/TcpFull complete!
+2025-07-24 15:24:07,744 - telethon.network.mtprotosender - INFO - Not disconnecting (already have no connection)
+2025-07-24 15:25:30,566 - services.supabase_service - INFO - Supabase client initialized
+2025-07-24 15:25:32,348 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:25:32,529 - services.supabase_service - INFO - Supabase client initialized
+2025-07-24 15:25:34,372 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:25:34,550 - services.supabase_service - INFO - Supabase client initialized
+2025-07-24 15:25:36,347 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:25:38,100 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:25:39,924 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:25:41,572 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:25:41,573 - config - INFO - Bot is starting...
+2025-07-24 15:25:41,573 - config - INFO - API ID: 28687000
+2025-07-24 15:25:41,573 - config - INFO - Bot Token: 7698897448...
+2025-07-24 15:25:41,574 - config - INFO - Bot is running...
+2025-07-24 15:25:41,575 - telethon.network.mtprotosender - INFO - Connecting to 91.108.56.151:443/TcpFull...
+2025-07-24 15:25:41,617 - telethon.network.mtprotosender - INFO - Connection to 91.108.56.151:443/TcpFull complete!
+2025-07-24 15:25:47,108 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:27:13,226 - telethon.network.mtprotosender - INFO - Disconnecting from 91.108.56.151:443/TcpFull...
+2025-07-24 15:27:13,228 - telethon.network.mtprotosender - INFO - Disconnection from 91.108.56.151:443/TcpFull complete!
+2025-07-24 15:27:13,233 - telethon.network.mtprotosender - INFO - Not disconnecting (already have no connection)
+2025-07-24 15:27:50,989 - services.supabase_service - INFO - Supabase client initialized
+2025-07-24 15:27:52,678 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:27:52,859 - services.supabase_service - INFO - Supabase client initialized
+2025-07-24 15:27:54,608 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:27:54,788 - services.supabase_service - INFO - Supabase client initialized
+2025-07-24 15:27:56,304 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:27:57,985 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:27:59,811 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:28:01,704 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:28:01,705 - config - INFO - Bot is starting...
+2025-07-24 15:28:01,705 - config - INFO - API ID: 28687000
+2025-07-24 15:28:01,705 - config - INFO - Bot Token: 7698897448...
+2025-07-24 15:28:01,705 - config - INFO - Bot is running...
+2025-07-24 15:28:01,706 - telethon.network.mtprotosender - INFO - Connecting to 91.108.56.151:443/TcpFull...
+2025-07-24 15:28:01,746 - telethon.network.mtprotosender - INFO - Connection to 91.108.56.151:443/TcpFull complete!
+2025-07-24 15:28:16,762 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:28:24,479 - handlers.psb_handlers - INFO - Successfully loaded 2845 rows from sheet: PSB
+2025-07-24 15:30:15,371 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:30:20,115 - handlers.psb_handlers - INFO - Successfully loaded 2845 rows from sheet: PSB
+2025-07-24 15:31:37,566 - telethon.network.mtprotosender - INFO - Disconnecting from 91.108.56.151:443/TcpFull...
+2025-07-24 15:31:37,567 - telethon.network.mtprotosender - INFO - Disconnection from 91.108.56.151:443/TcpFull complete!
+2025-07-24 15:31:37,586 - telethon.network.mtprotosender - INFO - Not disconnecting (already have no connection)
+2025-07-24 15:31:45,552 - services.supabase_service - INFO - Supabase client initialized
+2025-07-24 15:31:47,468 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:31:47,649 - services.supabase_service - INFO - Supabase client initialized
+2025-07-24 15:31:49,310 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:31:49,490 - services.supabase_service - INFO - Supabase client initialized
+2025-07-24 15:31:51,146 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:31:52,757 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:31:54,639 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:31:56,192 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:31:56,194 - config - INFO - Bot is starting...
+2025-07-24 15:31:56,194 - config - INFO - API ID: 28687000
+2025-07-24 15:31:56,194 - config - INFO - Bot Token: 7698897448...
+2025-07-24 15:31:56,195 - config - INFO - Bot is running...
+2025-07-24 15:31:56,195 - telethon.network.mtprotosender - INFO - Connecting to 91.108.56.151:443/TcpFull...
+2025-07-24 15:31:56,225 - telethon.network.mtprotosender - INFO - Connection to 91.108.56.151:443/TcpFull complete!
+2025-07-24 15:32:05,520 - services.google_sheets - INFO - Google Sheets service initialized successfully
+2025-07-24 15:32:29,652 - handlers.psb_handlers - INFO - Successfully loaded 2845 rows from sheet: PSB
+2025-07-24 15:33:25,922 - telethon.network.mtprotosender - INFO - Disconnecting from 91.108.56.151:443/TcpFull...
+2025-07-24 15:33:25,923 - telethon.network.mtprotosender - INFO - Disconnection from 91.108.56.151:443/TcpFull complete!
+2025-07-24 15:33:25,941 - telethon.network.mtprotosender - INFO - Not disconnecting (already have no connection)

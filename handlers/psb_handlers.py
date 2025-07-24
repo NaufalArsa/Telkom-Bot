@@ -36,17 +36,18 @@ class PSBHandlers:
 
     def format_psb_result(self, row):
         main_fields = [
-            "CUSTOMER NAME", "STO", "NOMOR INTERNET", "POTS", 
-            "INSTALL ADDRESS", "PACKAGE NAME", "LAST UPDATED DATE"
+            "CUSTOMER NAME", "STO", "NOMOR INTERNET", "PROVIDER", 
+            "ALAMAT", "PAKET", "CHANNEL", "TGL PS"
         ]
         field_emojis = {
             "CUSTOMER NAME": "👤",
             "STO": "🏢",
             "NOMOR INTERNET": "💡",
-            "POTS": "☎️",
-            "INSTALL ADDRESS": "📍",
-            "PACKAGE NAME": "📦",
-            "LAST UPDATED DATE": "🕒"
+            "PROVIDER": "🌐",
+            "ALAMAT": "📍",
+            "PAKET": "📦",
+            "CHANNEL": "📡",
+            "TGL PS": "📅"
         }
         msg = (
             "<b>📄 Hasil Pencarian PSB</b>\n"

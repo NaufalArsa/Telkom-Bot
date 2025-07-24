@@ -170,7 +170,7 @@ async def potensi_command_handler(event):
         return
     await potensi_handlers.potensi_command_handler(event)
 
-@client.on(events.NewMessage(pattern=r'^/psb$', incoming=True))
+@client.on(events.NewMessage(pattern=r'^/psb(\s+\w+)?', incoming=True))
 async def psb_handler(event):
     if not event.is_private:
         return
