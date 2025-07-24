@@ -559,7 +559,7 @@ def main():
                 )
                 brosur_file = st.file_uploader(
                     "Pilih file brosur (jpg/png/pdf):",
-                    type="jpg",
+                    type=["jpg", "jpeg", "png", "pdf"],
                     key="brosur_file"
                 )
                 submit_brosur = st.form_submit_button("Upload Brosur", use_container_width=True)
