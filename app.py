@@ -12,6 +12,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from dotenv import load_dotenv
 from supabase import create_client, Client
+from urllib.parse import quote
 
 # Load environment variables
 load_dotenv()
@@ -545,7 +546,66 @@ def main():
                                     st.rerun()
                                 else:
                                     st.error(f"❌ {error_msg}")
-    
+
+            # --- Brosur Upload Section ---
+            st.markdown("---")
+            st.subheader("📤 Upload Brosur")
+
+            with st.form("upload_brosur_form", clear_on_submit=True):
+                st.markdown("**Upload file ke bucket `brosur` dengan nama sesuai tipe. File lama akan di-replace otomatis.**")
+                brosur_type = st.selectbox(
+                    "Pilih tipe brosur:",
+                    ["Brosur HSI", "Brosur WMS", "Brosur UMKM"]
+                )
+                brosur_file = st.file_uploader(
+                    "Pilih file brosur (jpg/png/pdf):",
+                    type="jpg",
+                    key="brosur_file"
+                )
+                submit_brosur = st.form_submit_button("Upload Brosur", use_container_width=True)
+            
+            if submit_brosur:
+                if brosur_file is None:
+                    st.warning("Silakan pilih file terlebih dahulu.")
+                else:
+                    # Tentukan ekstensi file
+                    file_extension = os.path.splitext(brosur_file.name)[1]
+                    filename = f"{brosur_type}{file_extension}"
+                    try:
+                        # Upload ke Supabase bucket 'brosur' dengan upsert (replace)
+                        result = supabase_client.storage.from_("brosur").upload(
+                            path=filename,
+                            file=brosur_file.read(),
+                            file_options={"content-type": brosur_file.type, "upsert": "true"} # Replace existing file with the same name
+                        )
+                        if result:
+                            public_url = supabase_client.storage.from_("brosur").get_public_url(quote(filename))
+                            st.success(f"✅ Brosur berhasil diupload sebagai `{filename}`")
+                            st.markdown(f"[🔗 Lihat Brosur]({public_url})")
+                        else:
+                            st.error("❌ Upload gagal (tidak ada response dari Supabase).")
+                    except Exception as e:
+                        st.error(f"❌ Upload gagal: {e}")
+
+            # --- List Brosur Files ---
+            st.markdown("### 📚 Daftar Brosur di Storage")
+            try:
+                brosur_files = supabase_client.storage.from_("brosur").list()
+                if not brosur_files:
+                    st.info("Belum ada file brosur di storage.")
+                else:
+                    brosur_data = []
+                    for file in brosur_files:
+                        brosur_data.append({
+                            "Filename": file.get("name", "Unknown"),
+                            "Size (bytes)": file.get("metadata", {}).get("size", "Unknown"),
+                            "Created": file.get("created_at", "Unknown"),
+                            "Updated": file.get("updated_at", "Unknown")
+                        })
+                    st.dataframe(pd.DataFrame(brosur_data), use_container_width=True)
+            except Exception as e:
+                st.error(f"Gagal mengambil daftar brosur: {e}")
+
     with tab3:
         st.header("⚙️ Settings")
         
@@ -586,4 +646,4 @@ def main():
             st.error("Bot process has terminated!")
 
 if __name__ == "__main__":
-    main() 
+    main()

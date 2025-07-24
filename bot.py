@@ -8,6 +8,7 @@ from handlers.command_handlers import CommandHandlers
 from handlers.odp_handlers import ODPHandlers
 from handlers.potensi_handlers import PotensiHandlers
 from handlers.psb_handlers import PSBHandlers
+from handlers.brosur_handlers import BrosurHandlers
 from utils.location import extract_coords_from_gmaps_link
 from services.google_sheets import GoogleSheetsService
 import time
@@ -23,6 +24,7 @@ data_handlers = DataHandlers()
 location_handlers = LocationHandlers()
 command_handlers = CommandHandlers()
 odp_handlers = ODPHandlers()
+brosur_handlers = BrosurHandlers()
 potensi_handlers = PotensiHandlers(client)
 psb_handlers = PSBHandlers(client)
 
@@ -175,6 +177,12 @@ async def psb_handler(event):
     if not await is_user_allowed(event):
         return
     await psb_handlers.psb_command_handler(event)
+
+@client.on(events.NewMessage(pattern=r'^/brosur(\s+\w+)?$', incoming=True))
+async def brosur_handler(event):
+    if not await is_user_allowed(event):
+        return
+    await brosur_handlers.brosur_command_handler(event)
 
 # Main execution
 if __name__ == "__main__":
