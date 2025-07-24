@@ -47,19 +47,9 @@ class CommandHandlers:
                 "• Disimpan sementara sampai lengkap\n"
                 "• Data lama akan diganti jika kirim data baru\n\n"
                 "🗑️ **Reset data:**\n"
-                "• Ketik /start untuk menghapus data sementara\n"
-                "• Ketik /clear untuk menghapus data sementara\n\n"
+                "• Ketik /start atau /clear untuk menghapus data sementara\n\n"
                 "📊 **Cek status:**\n"
                 "• Ketik /status untuk melihat data sementara\n\n"
-                "🔗 **CARA MENDAPATKAN LINK GOOGLE MAPS:**\n"
-                "1. Buka Google Maps\n"
-                "2. Cari lokasi yang diinginkan\n"
-                "3. Klik Share → Copy link\n"
-                "4. Paste di chat bot\n\n"
-                "📍 **CARA SHARE LOKASI:**\n"
-                "1. Kirim data terlebih dahulu\n"
-                "2. Kemudian share lokasi Anda\n"
-                "3. Data akan otomatis lengkap\n\n"
                 "🚩 **Langkah khusus /odp:**\n"
                 "1. Ketik /odp\n"
                 "2. Kirim link Google Maps atau share lokasi Anda\n" 
@@ -72,6 +62,13 @@ class CommandHandlers:
                 "🔍 **Langkah khusus /psb:**\n"
                 "1. Ketik /psb dikkuti dengan nama customer. Contoh /psb Batubara\n"
                 "2. Bot akan mmeberikan 5 data PSB terkait.\n\n"
+                "📜 **Langkah khusus /brosur:**"
+                "1. Ketik /brosur diikuti dengan jenis brosur (HSI, WMS, UMKM)\n"
+                "2. Bot akan mengirimkan brosur yang sesuai dengan jenis yang diminta.\n\n"
+                "📖 **Brosur yang tersedia:**\n"
+                "• HSI - Brosur HSI\n"
+                "• WMS - Brosur WMS\n"    
+                "• UMKM - Brosur UMKM\n\n"
                 "📝 **FORMAT DATA:**\n"
                 "Ketik /format untuk melihat format yang benar"
             )
@@ -96,7 +93,8 @@ class CommandHandlers:
                             "• /clear - Hapus data sementara\n"
                             "• /odp - Cari 5 ODP terdekat dari lokasi Anda.\n"
                             "• /potensi - Cari 5 Potensi terdekat dari lokasi Anda.\n"
-                            "• /psb - Cari 5 PSB terkait dengan nama customer.")
+                            "• /psb - Cari 5 PSB terkait dengan nama customer.\n"
+                            "• /brosur - Dapatkan brosur sesuai jenis yang diminta.")
             user_started[user_id] = True
     
     async def status_handler(self, event, user_started: Dict, pending_data: Dict):
