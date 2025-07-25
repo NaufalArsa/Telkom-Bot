@@ -5,20 +5,31 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
+# Tambahkan di PSBHandlers
+import time
+
 class PSBHandlers:
     def __init__(self, client):
         self.client = client
         self.google_sheets_service = GoogleSheetsService()
         self.spreadsheet_name = SHEET_NAME
+        self._psb_cache = None
+        self._psb_cache_time = 0
+        self._psb_cache_interval = 600  # 10 menit
 
     def get_psb_dataframe(self):
+        now = time.time()
+        if self._psb_cache and (now - self._psb_cache_time < self._psb_cache_interval):
+            return self._psb_cache
         try:
             data = self.google_sheets_service.get_sheet_data_by_name(self.spreadsheet_name, "PSB")
             if data and len(data) > 1:
                 headers = data[0]
                 rows = data[1:]
-                df = pd.DataFrame(rows, columns=headers)  # type: ignore
+                df = pd.DataFrame(rows, columns=headers)
                 logger.info(f"Successfully loaded {len(df)} rows from sheet: PSB")
+                self._psb_cache = df
+                self._psb_cache_time = now
                 return df
             else:
                 logger.warning("No data found in sheet: PSB")
