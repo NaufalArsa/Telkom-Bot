@@ -20,7 +20,6 @@ def extract_coords_from_gmaps_link(link: str) -> Tuple[Optional[float], Optional
         }
         response = requests.get(link, headers=headers, allow_redirects=True, timeout=50)
         html = response.text
-        logger.info(f"HTML: {html}")
         # Try to extract lat,lng from embed or preview URLs
         match = re.search(
             r"https://www\.google\.com/maps/preview/place/.*?@(-?\d+\.\d+),(-?\d+\.\d+)",
