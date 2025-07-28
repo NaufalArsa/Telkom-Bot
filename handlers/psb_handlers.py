@@ -19,7 +19,7 @@ class PSBHandlers:
 
     def get_psb_dataframe(self):
         now = time.time()
-        if self._psb_cache and (now - self._psb_cache_time < self._psb_cache_interval):
+        if self._psb_cache is not None and (now - self._psb_cache_time < self._psb_cache_interval):
             return self._psb_cache
         try:
             data = self.google_sheets_service.get_sheet_data_by_name(self.spreadsheet_name, "PSB")
