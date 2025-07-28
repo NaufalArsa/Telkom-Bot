@@ -98,6 +98,6 @@ class PSBHandlers:
         if matches is None or matches.empty:
             await event.reply(f"❌ Tidak ada data PSB untuk nama: {customer_name}")
             return
-        for _, row in matches.head(5).iterrows():
+        for _, row in matches.iterrows():
             msg = self.format_psb_result(row)
             await event.reply(msg, parse_mode="html") 
