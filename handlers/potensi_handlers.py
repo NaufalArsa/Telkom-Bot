@@ -46,7 +46,7 @@ class PotensiHandlers:
             possible_nama_cols = ['Nama', 'nama', 'nama_instansi', 'NAMA', 'name']
             nama_col = next((col for col in possible_nama_cols if col in nearest.columns), None)
 
-            msg = f"📍 **5 Potensi Terdekat - {kategori}**\n\n"
+            msg = f"📍 **10 Potensi Terdekat - {kategori}**\n\n"
             for i, row in enumerate(nearest.itertuples(index=False), 1):
                 # Use getattr for namedtuple, fallback to '-'
                 nama = getattr(row, nama_col, '-') if nama_col else '-'
