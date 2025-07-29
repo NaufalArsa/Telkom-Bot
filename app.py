@@ -4,7 +4,7 @@ import json
 import os
 import subprocess
 import threading
-import time
+import time, requests
 import sys
 from datetime import datetime
 from timezone_utils import get_current_time, format_timestamp
@@ -30,6 +30,17 @@ def get_supabase_client():
             st.error(f"Failed to initialize Supabase client: {e}")
             return None
     return None
+
+def keep_alive(url):
+    while True:
+        try:
+            requests.get(url)
+        except Exception:
+            pass
+        time.sleep(1800)  # Ping every 30 minutes
+
+# Start keep-alive thread (replace with your app's public URL)
+threading.Thread(target=keep_alive, args=("https://yovi-bot.streamlit.app",), daemon=True).start()
 
 def list_supabase_files():
     """List all files in Supabase storage bucket"""

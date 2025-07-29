@@ -13,14 +13,14 @@ class PotensiHandlers:
 
     async def process_potensi_search(self, event, kategori, user_lat, user_lon):
         try:
-            await event.reply(f"🔎 Mencari 5 potensi terdekat untuk kategori: {kategori}...")
+            await event.reply(f"🔎 Mencari 10 potensi terdekat untuk kategori: {kategori}...")
             
             df = self.potensi_service.get_potensi_dataframe(kategori)
             if df is None or df.empty:
                 await event.reply(f"❌ Data potensi untuk kategori '{kategori}' tidak ditemukan.")
                 return
             
-            nearest = self.potensi_service.find_nearest(df, user_lat, user_lon, n=5)
+            nearest = self.potensi_service.find_nearest(df, user_lat, user_lon, n=10)
             
             if nearest.empty:
                 await event.reply(f"❌ Tidak ada data potensi '{kategori}' di sekitar lokasi Anda.")
