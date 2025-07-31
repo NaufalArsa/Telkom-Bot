@@ -9,6 +9,7 @@ from config import SUPABASE_URL, SUPABASE_KEY
 
 logger = logging.getLogger(__name__)
 
+# SupabaseService class to handle Supabase operations
 class SupabaseService:
     def __init__(self):
         self.client = None
@@ -18,6 +19,7 @@ class SupabaseService:
         else:
             logger.warning("Supabase URL or key not set")
     
+    # Method to upload file to Supabase storage bucket
     def upload_file(self, file_path: str) -> str:
         """Upload file to Supabase storage bucket with better error handling"""
         try:

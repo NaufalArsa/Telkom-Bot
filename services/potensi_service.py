@@ -6,12 +6,14 @@ from config import SHEET_NAME
 
 logger = logging.getLogger(__name__)
 
+# PotensiService class to handle Potensi-related operations
 class PotensiService:
     def __init__(self):
         self.google_sheets_service = GoogleSheetsService()
         # Use the same spreadsheet as the main service, but different sheets
         self.spreadsheet_name = SHEET_NAME
 
+    # Method to get Potensi data from Google Sheets based on category
     def get_potensi_dataframe(self, kategori):
         # Get data from Google Sheets - same spreadsheet, different sheets
         # Sheet names: Hotel, Manufaktur, Tempat Wisata, Pergudangan, Cafe/Restaurant, Distributor
@@ -29,6 +31,7 @@ class PotensiService:
             sheet_name = self.convert_category_to_sheet_name(kategori)
             return self.get_sheet_data(sheet_name)
 
+    # Method to convert category name to Google Sheets tab name
     def convert_category_to_sheet_name(self, kategori):
         """Convert category name to Google Sheets tab name"""
         # Map category names to sheet names
@@ -54,6 +57,7 @@ class PotensiService:
         # Default: return as is (for exact sheet names)
         return kategori
 
+    # Method to get data from a specific sheet
     def get_sheet_data(self, sheet_name):
         """Get data from Google Sheets by sheet name"""
         try:
@@ -75,6 +79,7 @@ class PotensiService:
             logger.error(f"Error getting data from sheet {sheet_name}: {e}")
             return None
 
+    # Method to find nearest Potensi locations based on user coordinates
     def find_nearest(self, df, user_lat, user_lon, n=5):
         user_location = (user_lat, user_lon)
         

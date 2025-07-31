@@ -8,11 +8,13 @@ from services.google_sheets import GoogleSheetsService
 
 logger = logging.getLogger(__name__)
 
+# LocationHandlers class to handle location-related operations
 class LocationHandlers:
     def __init__(self):
         self.supabase_service = SupabaseService()
         self.sheets_service = GoogleSheetsService()
     
+    # Method to handle Google Maps link messages
     async def handle_gmaps_link(self, event, user_id: str, pending_data: Dict):
         """Handle Google Maps link messages"""
         if user_id not in pending_data:
@@ -38,6 +40,7 @@ class LocationHandlers:
         else:
             await self.process_other_data_with_coords(event, pending, user_id, lat, lon, link_gmaps, pending_data)
     
+    # Method to handle location sharing
     async def handle_location_share(self, event, user_id: str, pending_data: Dict):
         """Handle location sharing"""
         try:
@@ -66,6 +69,7 @@ class LocationHandlers:
             logger.error(f"Error in handle_location_share: {e}")
             await event.reply("❌ Terjadi error saat memproses lokasi. Silakan coba lagi.")
     
+    # Method to process complete data with coordinates
     async def process_complete_data_with_coords(self, event, pending: Dict, user_id: str, lat: float, lon: float, link_gmaps: str, pending_data: Dict):
         """Process complete data with coordinates"""
         try:
@@ -102,6 +106,7 @@ class LocationHandlers:
             logger.error(f"Error in process_complete_data_with_coords: {e}")
             await event.reply("❌ Terjadi error saat memproses data. Silakan coba lagi.")
     
+    # Method to process caption-only data with coordinates
     async def process_caption_only_with_coords(self, event, pending: Dict, user_id: str, lat: float, lon: float, link_gmaps: str, pending_data: Dict):
         """Process caption-only data with coordinates"""
         try:
@@ -128,6 +133,7 @@ class LocationHandlers:
             logger.error(f"Error in process_caption_only_with_coords: {e}")
             await event.reply("❌ Terjadi error saat memproses data. Silakan coba lagi.")
     
+    # Method to process other data types with coordinates
     async def process_other_data_with_coords(self, event, pending: Dict, user_id: str, lat: float, lon: float, link_gmaps: str, pending_data: Dict):
         """Process other data types with coordinates"""
         try:
@@ -168,6 +174,7 @@ class LocationHandlers:
             logger.error(f"Error in process_other_data_with_coords: {e}")
             await event.reply("❌ Terjadi error saat memproses data. Silakan coba lagi.")
     
+    # Method to clean up pending data and temporary files
     def _cleanup_pending_data(self, user_id: str, pending_data: Dict):
         """Clean up pending data and temporary files for a user"""
         if user_id in pending_data:

@@ -16,6 +16,7 @@ CAPTION_PATTERN = re.compile(r"""
     Voice\s+of\s+Customer:\s*(?P<voc>.*?)(?:\n|$)
 """, re.DOTALL | re.MULTILINE | re.IGNORECASE | re.VERBOSE)
 
+# Function to validate caption data
 def validate_caption_data(row: Dict[str, str]) -> Tuple[bool, List[str], str]:
     """Validate caption data fields"""
     missing_fields = []
@@ -34,6 +35,7 @@ def validate_caption_data(row: Dict[str, str]) -> Tuple[bool, List[str], str]:
     
     return True, [], "✅ Semua data lengkap!"
 
+# Function to extract markdown link from text
 def extract_markdown_link(text: str) -> str:
     """Extract URL from markdown link format [text](url)"""
     md_match = re.match(r'\[.*?\]\((https?://[^\)]+)\)', text)

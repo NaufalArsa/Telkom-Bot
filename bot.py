@@ -39,6 +39,7 @@ allowed_telegram_ids = set()
 last_id_fetch_time = 0
 ID_FETCH_INTERVAL = 60  # seconds
 
+# Function to fetch allowed Telegram IDs from Google Sheets
 def fetch_allowed_telegram_ids():
     global allowed_telegram_ids, last_id_fetch_time
     now = time.time()
@@ -64,6 +65,7 @@ def fetch_allowed_telegram_ids():
         logger.error(f"Failed to fetch allowed Telegram IDs: {e}")
     return allowed_telegram_ids
 
+# Function to check if user is allowed to use the bot
 async def is_user_allowed(event):
     user_id = str(event.sender_id)
     allowed_ids = fetch_allowed_telegram_ids()
@@ -136,48 +138,56 @@ async def format_handler(event):
         return
     await command_handlers.format_handler(event)
 
+# Command handlers for various commands
 @client.on(events.NewMessage(pattern=r'^/help$', incoming=True))
 async def help_handler(event):
     if not await is_user_allowed(event):
         return
     await command_handlers.help_handler(event)
 
+# Command handler for /start
 @client.on(events.NewMessage(pattern=r'^/start$', incoming=True))
 async def start_handler(event):
     if not await is_user_allowed(event):
         return
     await command_handlers.start_handler(event, user_started, pending_data)
 
+# Command handler for /clear
 @client.on(events.NewMessage(pattern=r'^/record$', incoming=True))
 async def record_handler(event):
     if not await is_user_allowed(event):
         return
     await record_handlers.record_command_handler(event)
 
+# Command handler for /status
 @client.on(events.NewMessage(pattern=r'^/status$', incoming=True))
 async def status_handler(event):
     if not await is_user_allowed(event):
         return
     await command_handlers.status_handler(event, user_started, pending_data)
 
+# Command handler for /clear
 @client.on(events.NewMessage(pattern=r'^/clear$', incoming=True))
 async def clear_handler(event):
     if not await is_user_allowed(event):
         return
     await command_handlers.clear_handler(event, user_started, pending_data)
 
+# Command handler for /odp
 @client.on(events.NewMessage(pattern=r'^/odp$', incoming=True))
 async def odp_command_handler(event):
     if not await is_user_allowed(event):
         return
     await odp_handlers.odp_command_handler(event)
 
+# Command handler for /potensi
 @client.on(events.NewMessage(pattern=r'^/potensi$', incoming=True))
 async def potensi_command_handler(event):
     if not await is_user_allowed(event):
         return
     await potensi_handlers.potensi_command_handler(event)
 
+# Command handler for /psb
 @client.on(events.NewMessage(pattern=r'^/psb(\s+\w+)?', incoming=True))
 async def psb_handler(event):
     if not event.is_private:
@@ -186,6 +196,7 @@ async def psb_handler(event):
         return
     await psb_handlers.psb_command_handler(event)
 
+# Command handler for /brosur
 @client.on(events.NewMessage(pattern=r'^/brosur(\s+\w+)?$', incoming=True))
 async def brosur_handler(event):
     if not await is_user_allowed(event):

@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
+# Function to get environment variable with optional default value
 def get_env_var(name, required=True):
     value = os.environ.get(name)
     if required and not value:

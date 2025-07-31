@@ -9,11 +9,13 @@ from timezone_utils import format_timestamp
 
 logger = logging.getLogger(__name__)
 
+# DataHandlers class to handle data operations
 class DataHandlers:
     def __init__(self):
         self.supabase_service = SupabaseService()
         self.sheets_service = GoogleSheetsService()
     
+    # Method to handle photo-only messages
     def cleanup_pending_data(self, user_id: str, pending_data: Dict):
         """Clean up pending data and temporary files for a user"""
         if user_id in pending_data:
@@ -26,6 +28,7 @@ class DataHandlers:
                     logger.error(f"Failed to remove temporary file: {e}")
             del pending_data[user_id]
     
+    # Command handler for /format command
     async def handle_photo_only(self, event, user_id: str, pending_data: Dict):
         """Handle photo-only messages"""
         try:
@@ -119,6 +122,7 @@ class DataHandlers:
             except:
                 logger.error("Failed to send error message to user")
     
+    # Method to handle photo with caption messages
     async def handle_photo_with_caption(self, event, user_id: str, pending_data: Dict):
         """Handle photo with caption messages"""
         try:
@@ -198,6 +202,7 @@ class DataHandlers:
             except:
                 logger.error("Failed to send error message to user")
     
+    # Method to handle caption-only messages    
     async def handle_caption_only(self, event, user_id: str, pending_data: Dict):
         """Handle caption-only messages"""
         try:

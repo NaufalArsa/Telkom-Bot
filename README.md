@@ -8,10 +8,15 @@ A comprehensive Telegram bot with a Streamlit web dashboard for managing and mon
 - **Telegram Bot Integration**: Handles photo and text messages
 - **Google Sheets Integration**: Automatically saves data to Google Sheets
 - **Potensi & ODP Lookup**: Finds nearest Potensi (Hotel, Perusahaan, Tempat Wisata, Industri, Cafe/Restaurant, Rumah Sakit) and ODP using data from Google Sheets tabs
+- **PSB Lookup**: Find subscribed customers for the service provided
+- **Record Historical Data**: Get historical data inputted by user
 - **Supabase Storage (Image Only)**: Uploads photos to Supabase storage (tabular data now uses Google Sheets)
 - **Location Processing**: Extracts coordinates from Google Maps links using Python
 - **Data Validation**: Validates required fields before saving
 - **Multi-step Data Collection**: Allows users to send data in parts
+- **Brosur Management**: Send brosur based on type (HSI, WMS, UMKM) from Supabase storage
+- **PSB Search**: Search for PSB data by customer name from Google Sheets
+- **Record History**: View user's input history from Google Sheets
 
 ### Dashboard Features
 - **Real-time Monitoring**: Monitor bot status and activities
@@ -31,7 +36,7 @@ A comprehensive Telegram bot with a Streamlit web dashboard for managing and mon
 
 1. **Clone the repository**
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/NaufalArsa/Telkom-Bot.git
 cd streamlit
 ```
 
@@ -171,6 +176,8 @@ python bot.py
 | `/clear` | Clear pending data |
 | `/potensi` | Cari potensi terdekat dari Google Sheets (Hotel, Perusahaan, dll) |
 | `/odp` | Cari ODP terdekat dari Google Sheets tab ODP |
+| `/psb [CUSTOMER_NAME]` | Mendapatkan data pelanggan sesuai dengan nama |
+| `/record` | Mendapatkan informasi riwayat data yang pernah diinput |
 
 ## 📋 Data Format
 
@@ -209,15 +216,32 @@ Voice of Customer: [VOC]
 ### Project Structure
 ```
 streamlit/
-├── bot.py                 # Main bot file
-├── app.py                 # Streamlit dashboard
-├── test.py                # Google Maps coordinate extraction test
-├── expand.js              # Node.js coordinate extraction (legacy)
-├── requirements.txt       # Python dependencies
-├── package.json           # Node.js dependencies
-├── .env                  # Environment variables
-├── bot.log              # Bot logs
-└── README.md            # This file
+├── bot.py                 # Main entry point for the Telegram bot
+├── app.py                 # Streamlit dashboard web app
+├── requirements.txt       # List of Python dependencies required for the project.
+├── .env                   # Environment variables (API keys, tokens, config) 
+├── bot.log                # Log file for bot activity, errors, and debugging information.
+├── README.md              # Project documentation
+├── config.py              # Centralized configuration constants 
+├── handlers/              # Directory for modular bot command/data handlers.
+│   ├── __init__.py            # Marks the directory as a Python package.
+│   ├── command_handlers.py    # Handles generic bot commands (e.g., /start, /help).
+│   ├── data_handlers.py       # Handles data-related commands or logic.
+│   ├── location_handlers.py   # Handles location extraction and processing.
+│   ├── odp_handlers.py        # Handles ODP-specific commands and logic.
+│   ├── potensi_handlers.py    # Handles Potensi (potential customer) search and formatting.
+│   ├── psb_handlers.py        # Handles PSB (customer) search and formatting.
+│   ├── brosur_handlers.py     # Handles brosur (brochure) retrieval and sending.
+│   ├── record_handlers.py     # Handles user record/history retrieval and formatting.
+├── services/              # Directory for integrations with external services.
+│   ├── __init__.py            # Marks the directory as a Python package.
+│   ├── google_sheets.py       # Functions/classes for interacting with Google Sheets API.
+│   ├── potensi_service.py     # Service logic for Potensi data (fetching, filtering, etc.).
+│   ├── supabase_service.py    # Functions/classes for interacting with Supabase storage.
+├── utils/                 # Utility/helper functions.
+│   ├── __init__.py            # Marks the directory as a Python package.
+│   ├── location.py            # Functions for extracting and validating coordinates.
+|   |-- validation.py          # Configure regex pattern and validate data input.
 ```
 
 ### Adding New Features

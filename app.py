@@ -31,6 +31,7 @@ def get_supabase_client():
             return None
     return None
 
+# Keep-alive function to ping the app periodically
 def keep_alive(url):
     while True:
         try:
@@ -42,6 +43,7 @@ def keep_alive(url):
 # Start keep-alive thread (replace with your app's public URL)
 threading.Thread(target=keep_alive, args=("https://yovi-bot.streamlit.app",), daemon=True).start()
 
+# Function to list files in Supabase storage bucket
 def list_supabase_files():
     """List all files in Supabase storage bucket"""
     supabase = get_supabase_client()
@@ -55,6 +57,7 @@ def list_supabase_files():
     except Exception as e:
         return [], f"Error listing files: {str(e)}"
 
+# Function to delete a file from Supabase storage
 def delete_supabase_file(filename):
     """Delete a file from Supabase storage"""
     supabase = get_supabase_client()
@@ -68,6 +71,7 @@ def delete_supabase_file(filename):
     except Exception as e:
         return False, f"Error deleting file: {str(e)}"
 
+# Function to get public URL for a file in Supabase storage
 def get_supabase_file_url(filename):
     """Get public URL for a file in Supabase storage"""
     supabase = get_supabase_client()
@@ -81,6 +85,7 @@ def get_supabase_file_url(filename):
         st.error(f"Error getting file URL: {e}")
         return None
 
+# Function to upload a file to Supabase storage bucket 'odp'
 def upload_odp_to_supabase(file, filename):
     """Upload a file to Supabase storage bucket 'odp'"""
     supabase = get_supabase_client()
@@ -94,6 +99,7 @@ def upload_odp_to_supabase(file, filename):
     except Exception as e:
         return False, f"Error uploading file: {str(e)}"
 
+# Function to list files in Supabase storage bucket 'odp'
 def list_odp_supabase_files():
     """List all files in Supabase storage bucket 'odp'"""
     supabase = get_supabase_client()
@@ -106,6 +112,7 @@ def list_odp_supabase_files():
     except Exception as e:
         return [], f"Error listing files: {str(e)}"
 
+# Function to delete a file from Supabase storage bucket 'odp'
 def delete_odp_supabase_file(filename):
     """Delete a file from Supabase storage bucket 'odp'"""
     supabase = get_supabase_client()
@@ -163,6 +170,7 @@ if 'bot_process' not in st.session_state:
 if 'bot_output' not in st.session_state:
     st.session_state.bot_output = []
 
+# Function to get data from Google Sheets
 def get_google_sheets_data():
     """Get data from Google Sheets"""
     try:
@@ -194,6 +202,7 @@ def get_google_sheets_data():
     except Exception as e:
         return None, f"Error loading data: {str(e)}"
 
+# Function to start the bot in a separate thread
 def start_bot():
     """Start the bot in a separate thread with better error handling"""
     try:
@@ -265,6 +274,7 @@ def start_bot():
         st.error(f"Error starting bot: {str(e)}")
         return False
 
+# Function to stop the bot
 def stop_bot():
     """Stop the bot"""
     try:
@@ -282,6 +292,7 @@ def stop_bot():
         st.error(f"Error stopping bot: {str(e)}")
         return False
 
+# Function to check if the bot is running
 def check_bot_status():
     """Check if bot is running"""
     if st.session_state.bot_process:

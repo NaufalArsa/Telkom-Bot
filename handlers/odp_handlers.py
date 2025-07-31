@@ -8,12 +8,14 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
+# ODPHandlers class to handle ODP-related operations
 class ODPHandlers:
     def __init__(self):
         self.google_sheets_service = GoogleSheetsService()
         self.odp_user_state = {}  # user_id: True jika sedang menunggu lokasi untuk /odp
         self.spreadsheet_name = SHEET_NAME
 
+    # Method to format ODP results for display
     def format_odp_result(self, nearest_5):
         """Format ODP results for display"""
         msg = "\n=== 5 ODP Terdekat ===\n"
@@ -55,6 +57,7 @@ class ODPHandlers:
             logger.error(f"Error getting data from sheet ODP: {e}")
             return None
 
+    # Process ODP nearest search
     async def process_odp_nearest(self, event, user_id, lat, lon):
         """Process ODP nearest search"""
         user_maps = f"https://www.google.com/maps?q={lat},{lon}"
@@ -92,6 +95,7 @@ class ODPHandlers:
         except Exception as e:
             await event.reply(f"❌ Gagal menghitung jarak ODP: {e}")
     
+    # Command handler for /odp
     async def odp_command_handler(self, event):
         """Handle /odp command"""
         if event.is_private:
@@ -99,6 +103,7 @@ class ODPHandlers:
             self.odp_user_state[user_id] = True
             await event.reply("Silakan kirim link Google Maps atau share lokasi Anda untuk mencari ODP terdekat.")
     
+    # Method to handle Google Maps link with ODP state check
     async def handle_gmaps_link_with_odp(self, event, user_id: str):
         """Handle Google Maps link with ODP state check"""
         lat, lon = extract_coords_from_gmaps_link(event.text.strip())
@@ -108,6 +113,7 @@ class ODPHandlers:
             return True
         return False
     
+    # Method to handle location sharing with ODP state check
     async def handle_location_share_with_odp(self, event, user_id: str):
         """Handle location share with ODP state check"""
         latitude = event.message.geo.lat

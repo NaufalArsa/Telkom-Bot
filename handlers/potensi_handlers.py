@@ -5,12 +5,14 @@ from utils.location import extract_coords_from_gmaps_link
 
 logger = logging.getLogger(__name__)
 
+# PotensiHandlers class to handle potensi-related operations
 class PotensiHandlers:
     def __init__(self, client):
         self.client = client
         self.potensi_service = PotensiService()
         self.user_potensi_state = {}  # user_id: kategori
 
+    # Method to format potensi results for display
     async def process_potensi_search(self, event, kategori, user_lat, user_lon):
         try:
             await event.reply(f"🔎 Mencari 10 potensi terdekat untuk kategori: {kategori}...")
@@ -82,6 +84,7 @@ class PotensiHandlers:
             logger.error(f"Error in process_potensi_search: {e}")
             await event.reply(f"❌ Terjadi error saat mencari potensi: {e}")
 
+    # Command handler for /potensi
     async def potensi_command_handler(self, event):
         """Handle /potensi command"""
         if event.is_private:
@@ -95,6 +98,7 @@ class PotensiHandlers:
                 buttons=buttons
             )
 
+    # Method to handle Google Maps link with potensi state check
     async def handle_gmaps_link_with_potensi(self, event, user_id: str):
         """Handle Google Maps link with potensi state check"""
         if user_id in self.user_potensi_state:
@@ -109,6 +113,7 @@ class PotensiHandlers:
                 return True
         return False
 
+    # Method to handle location sharing with potensi state check
     async def handle_location_share_with_potensi(self, event, user_id: str):
         """Handle location share with potensi state check"""
         if user_id in self.user_potensi_state:
@@ -120,6 +125,7 @@ class PotensiHandlers:
             return True
         return False
 
+    # Method to handle category selection for potensi
     async def handle_category_selection(self, event, user_id: str):
         """Handle category selection for potensi"""
         text = event.text.strip()

@@ -5,10 +5,12 @@ from typing import Tuple, Optional
 
 logger = logging.getLogger(__name__)
 
+# Function to generate Google Maps link from coordinates
 def get_gmaps_link_from_coords(lat: float, lon: float) -> str:
     """Generate Google Maps link from coordinates"""
     return f"https://www.google.com/maps?q={lat},{lon}"
 
+# Function to extract coordinates from Google Maps link
 def extract_coords_from_gmaps_link(link: str) -> Tuple[Optional[float], Optional[float]]:
     """Extract latitude and longitude from Google Maps short or long link."""
     if not link or not link.strip():
@@ -39,6 +41,7 @@ def extract_coords_from_gmaps_link(link: str) -> Tuple[Optional[float], Optional
     # Fallback to Selenium if requests/regex failed
     return None, None
 
+# Function to process coordinates and return location string and Google Maps link
 def process_coordinates(lat: float, lon: float) -> Tuple[str, str]:
     """Process coordinates and return location string and Google Maps link"""
     location_coords = f"{lat},{lon}"

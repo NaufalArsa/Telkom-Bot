@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 # Tambahkan di PSBHandlers
 import time
 
+# PSBHandlers class to handle PSB-related operations
 class PSBHandlers:
     def __init__(self, client):
         self.client = client
@@ -17,6 +18,7 @@ class PSBHandlers:
         self._psb_cache_time = 0
         self._psb_cache_interval = 600  # 10 menit
 
+    # Method to get PSB data from Google Sheets
     def get_psb_dataframe(self):
         now = time.time()
         if self._psb_cache is not None and (now - self._psb_cache_time < self._psb_cache_interval):
@@ -38,6 +40,7 @@ class PSBHandlers:
             logger.error(f"Error getting data from sheet PSB: {e}")
             return None
 
+    # Method to handle PSB command
     def search_by_customer_name(self, df, customer_name):
         # Case-insensitive search, exact or partial match
         if "CUSTOMER NAME" not in df.columns:
@@ -45,6 +48,7 @@ class PSBHandlers:
         matches = df[df["CUSTOMER NAME"].str.contains(customer_name, case=False, na=False)]
         return matches
 
+    # Method to format PSB result for display
     def format_psb_result(self, row):
         main_fields = [
             "CUSTOMER NAME", "STO", "NOMOR INTERNET", "PROVIDER", 
@@ -82,6 +86,7 @@ class PSBHandlers:
         msg += "━━━━━━━━━━━━━━━━━━━━━━"
         return msg
 
+    # Command handler for /psb
     async def psb_command_handler(self, event):
         if not event.is_private:
             return

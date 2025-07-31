@@ -7,6 +7,7 @@ from urllib.parse import quote
 
 logger = logging.getLogger(__name__)
 
+# Handlers for Brosur commands
 class BrosurHandlers:
     def __init__(self):
         # Inisialisasi Supabase client
@@ -25,6 +26,7 @@ class BrosurHandlers:
             "UMKM": "Brosur UMKM"
         }
 
+    # Method to send brosur based on type
     async def send_brosur(self, event, jenis: str):
         if not self.client:
             await event.reply("❌ Supabase belum terkonfigurasi.")
@@ -57,6 +59,7 @@ class BrosurHandlers:
         if not found:
             await event.reply(f"❌ Brosur untuk *{tipe_brosur}* tidak ditemukan di storage.", parse_mode="md")
 
+    # Command handler for /brosur
     async def brosur_command_handler(self, event):
         """Handle /brosur command dengan argumen jenis"""
         if event.is_private:

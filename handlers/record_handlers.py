@@ -5,11 +5,13 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
+# RecordHandlers class to handle record-related operations
 class RecordHandlers:
     def __init__(self):
         self.google_sheets_service = GoogleSheetsService()
         self.spreadsheet_name = SHEET_NAME
 
+    # Method to get record data from Google Sheets
     def get_record_dataframe(self):
         try:
             data = self.google_sheets_service.get_sheet_data_by_name(self.spreadsheet_name, "Rekap")
@@ -26,6 +28,7 @@ class RecordHandlers:
             logger.error(f"Error getting data from sheet Rekap: {e}")
             return None
 
+    # Method to search records by Telegram ID
     def search_by_telegram_id(self, df, telegram_id):
         # Cari kolom Telegram ID
         id_cols = [col for col in df.columns if col.strip().lower() in ["id"]]
@@ -35,6 +38,7 @@ class RecordHandlers:
         matches = df[df[id_col] == str(telegram_id)]
         return matches
 
+    # Method to format record result for display
     def format_record_result(self, row, idx):
         # Kolom yang ingin ditampilkan
         main_fields = ["No", "Nama Usaha", "PIC", "Timestamp"]
@@ -45,6 +49,7 @@ class RecordHandlers:
         msg += "━━━━━━━━━━━━━━━━━━━━━━\n"
         return msg
 
+    # Command handler for /record
     async def record_command_handler(self, event):
         if not event.is_private:
             return

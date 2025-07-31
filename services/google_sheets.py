@@ -7,11 +7,13 @@ from timezone_utils import format_timestamp
 
 logger = logging.getLogger(__name__)
 
+# GoogleSheetsService class to handle Google Sheets operations
 class GoogleSheetsService:
     def __init__(self):
         self.sheet = None
         self._initialize_sheet()
     
+    # Initialize Google Sheets connection
     def _initialize_sheet(self):
         """Initialize Google Sheets connection"""
         try:
@@ -32,6 +34,7 @@ class GoogleSheetsService:
                 logger.error(f"Error loading fallback credentials: {e2}")
                 raise
     
+    # Method to save data to Google Sheets
     def save_to_spreadsheet(self, data: Dict[str, str], user_id: str, coords: str, file_link: str, gmaps_link: str = "") -> bool:
         """Save data to spreadsheet with error handling"""
         if not self.sheet:
@@ -55,6 +58,7 @@ class GoogleSheetsService:
             logger.error(f"Failed to save to spreadsheet: {e}")
             return False
     
+    # Method to update location in spreadsheet
     def update_location_in_spreadsheet(self, user_id: str, latitude: float, longitude: float) -> bool:
         """Update location coordinates for existing user data"""
         try:
@@ -84,6 +88,7 @@ class GoogleSheetsService:
             logger.error(f"Failed to update location in spreadsheet: {e}")
             return False 
 
+    # Method to get data from a specific sheet
     def get_sheet_data(self, spreadsheet_id: str, sheet_name: str):
         """Get data from a specific sheet in a Google Spreadsheet"""
         try:
@@ -104,6 +109,7 @@ class GoogleSheetsService:
             logger.error(f"Error getting data from sheet {sheet_name}: {e}")
             return None
 
+    # Method to get data from a specific sheet by name within the same spreadsheet
     def get_sheet_data_by_name(self, spreadsheet_name: str, sheet_name: str):
         """Get data from a specific sheet by name within the same spreadsheet"""
         try:

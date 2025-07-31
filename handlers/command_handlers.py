@@ -6,10 +6,12 @@ from handlers.data_handlers import DataHandlers
 
 logger = logging.getLogger(__name__)
 
+# Command Handlers for various commands
 class CommandHandlers:
     def __init__(self):
         self.data_handlers = DataHandlers()
     
+    # Format handler for /format command
     async def format_handler(self, event):
         """Handle /format command"""
         if event.is_private:
@@ -27,6 +29,7 @@ class CommandHandlers:
             )
             await event.reply(format_text)
     
+    # Help handler for /help command
     async def help_handler(self, event):
         """Handle /help command"""
         if event.is_private:
@@ -74,6 +77,7 @@ class CommandHandlers:
             )
             await event.reply(help_text)
     
+    # Start handler for /start command
     async def start_handler(self, event, user_started: Dict, pending_data: Dict):
         """Handle /start command"""
         if event.is_private:
@@ -94,9 +98,11 @@ class CommandHandlers:
                             "• /odp - Cari 5 ODP terdekat dari lokasi Anda.\n"
                             "• /potensi - Cari 5 Potensi terdekat dari lokasi Anda.\n"
                             "• /psb - Cari 5 PSB terkait dengan nama customer.\n"
-                            "• /brosur - Dapatkan brosur sesuai jenis yang diminta.")
+                            "• /brosur - Dapatkan brosur sesuai jenis yang diminta.\n"
+                            "• /record - Cek riwayat input Anda.\n\n")
             user_started[user_id] = True
     
+    # Status handler for /status command
     async def status_handler(self, event, user_started: Dict, pending_data: Dict):
         """Handle /status command"""
         if event.is_private:
@@ -151,6 +157,7 @@ class CommandHandlers:
             else:
                 await event.reply("📭 **Status: Tidak ada data sementara**\n\nSilakan kirim foto atau caption untuk memulai.")
     
+    # Clear handler for /clear command
     async def clear_handler(self, event, user_started: Dict, pending_data: Dict):
         """Handle /clear command"""
         if event.is_private:
