@@ -9,6 +9,7 @@ from handlers.odp_handlers import ODPHandlers
 from handlers.potensi_handlers import PotensiHandlers
 from handlers.psb_handlers import PSBHandlers
 from handlers.brosur_handlers import BrosurHandlers
+from handlers.record_handlers import RecordHandlers
 from utils.location import extract_coords_from_gmaps_link
 from services.google_sheets import GoogleSheetsService
 import time
@@ -27,6 +28,7 @@ odp_handlers = ODPHandlers()
 brosur_handlers = BrosurHandlers()
 potensi_handlers = PotensiHandlers(client)
 psb_handlers = PSBHandlers(client)
+record_handlers = RecordHandlers()
 
 # Data storage
 pending_data: Dict[str, Dict] = {}
@@ -145,6 +147,12 @@ async def start_handler(event):
     if not await is_user_allowed(event):
         return
     await command_handlers.start_handler(event, user_started, pending_data)
+
+@client.on(events.NewMessage(pattern=r'^/record$', incoming=True))
+async def record_handler(event):
+    if not await is_user_allowed(event):
+        return
+    await record_handlers.record_command_handler(event)
 
 @client.on(events.NewMessage(pattern=r'^/status$', incoming=True))
 async def status_handler(event):
