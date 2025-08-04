@@ -4,3 +4,5 @@ gcredentials.json
 bot_local.py
 bot_optimized.py
 secrets.toml
+get_token.py
+survey.py

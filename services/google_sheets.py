@@ -128,4 +128,31 @@ class GoogleSheetsService:
             
         except Exception as e:
             logger.error(f"Error getting data from sheet {sheet_name} in {spreadsheet_name}: {e}")
-            return None 
+            return None
+
+    # Method to update data in a specific sheet by name
+    def update_sheet_by_name(self, spreadsheet_name: str, sheet_name: str, data):
+        """Update data in a specific sheet by name within the same spreadsheet"""
+        try:
+            # Get credentials
+            creds_dict, scope = load_google_credentials()
+            creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)  # type: ignore
+            gc = gspread.authorize(creds)  # type: ignore
+            
+            # Open the spreadsheet by name and get the specific sheet
+            spreadsheet = gc.open(spreadsheet_name)  # type: ignore
+            worksheet = spreadsheet.worksheet(sheet_name)  # type: ignore
+            
+            # Clear existing data and update with new data
+            worksheet.clear()
+            
+            # Update with new data
+            if data:
+                worksheet.update(data)
+            
+            logger.info(f"Successfully updated sheet {sheet_name} in {spreadsheet_name}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error updating sheet {sheet_name} in {spreadsheet_name}: {e}")
+            return False

@@ -10,6 +10,7 @@ from handlers.potensi_handlers import PotensiHandlers
 from handlers.psb_handlers import PSBHandlers
 from handlers.brosur_handlers import BrosurHandlers
 from handlers.record_handlers import RecordHandlers
+from handlers.summary_handlers import SummaryHandlers
 from utils.location import extract_coords_from_gmaps_link
 from services.google_sheets import GoogleSheetsService
 import time
@@ -29,6 +30,7 @@ brosur_handlers = BrosurHandlers()
 potensi_handlers = PotensiHandlers(client)
 psb_handlers = PSBHandlers(client)
 record_handlers = RecordHandlers()
+summary_handlers = SummaryHandlers()
 
 # Data storage
 pending_data: Dict[str, Dict] = {}
@@ -195,6 +197,20 @@ async def psb_handler(event):
     if not await is_user_allowed(event):
         return
     await psb_handlers.psb_command_handler(event)
+
+# Command handler for /summary
+@client.on(events.NewMessage(pattern=r'^/summary(\s+\w+)?$', incoming=True))
+async def summary_handler(event):
+    if not await is_user_allowed(event):
+        return
+    await summary_handlers.summary_sa_command_handler(event)
+
+# Command handler for /summarymtd
+@client.on(events.NewMessage(pattern=r'^/summarymtd$', incoming=True))
+async def summary_all_handler(event):
+    if not await is_user_allowed(event):
+        return
+    await summary_handlers.summary_all_command_handler(event)
 
 # Command handler for /brosur
 @client.on(events.NewMessage(pattern=r'^/brosur(\s+\w+)?$', incoming=True))

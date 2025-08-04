@@ -99,7 +99,8 @@ class CommandHandlers:
                             "• /potensi - Cari 5 Potensi terdekat dari lokasi Anda.\n"
                             "• /psb - Cari 5 PSB terkait dengan nama customer.\n"
                             "• /brosur - Dapatkan brosur sesuai jenis yang diminta.\n"
-                            "• /record - Cek riwayat input Anda.\n\n")
+                            "• /record - Cek riwayat input Anda.\n"
+                            "• /summary [SA_ID] - Dapatkan ringkasan data untuk SA tertentu.\n\n")
             user_started[user_id] = True
     
     # Status handler for /status command
