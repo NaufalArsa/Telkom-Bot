@@ -1,6 +1,7 @@
 import re
 import requests
 import logging
+import time
 from typing import Tuple, Optional
 
 logger = logging.getLogger(__name__)
@@ -22,6 +23,8 @@ def extract_coords_from_gmaps_link(link: str) -> Tuple[Optional[float], Optional
         }
         response = requests.get(link, headers=headers, allow_redirects=True, timeout=50)
         html = response.text
+        
+        time.sleep(5)
         # Try to extract lat,lng from embed or preview URLs
         match = re.search(
             r"https://www\.google\.com/maps/preview/place/.*?@(-?\d+\.\d+),(-?\d+\.\d+)",
@@ -32,7 +35,7 @@ def extract_coords_from_gmaps_link(link: str) -> Tuple[Optional[float], Optional
             return float(lat), float(lng)
         # fallback: try plain lat,lng patterns in URL or page
         full_url = response.url
-        match2 = re.search(r"[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)", full_url)
+        match2 = re.search(r"@(-?\d+\.\d+),(-?\d+\.\d+)", full_url)
         if match2:
             lat, lng = match2.groups()
             return float(lat), float(lng)

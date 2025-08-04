@@ -49,11 +49,14 @@ class SummaryHandlers:
             this_year = today.year
 
             # Header Summary SA
-            sa_summary = ["Nama SA | Jumlah Visit HI | Jumlah Visit MTD | Achieve MTD"]
+            sa_summary = []
+            sa_summary.append("Nama SA        | Jumlah Visit HI | Jumlah Visit MTD | Achieve MTD")
+            sa_summary.append("-" * 60)
+
             for sa in sorted(sa_list):
-                df_sa = df[df['SA Name'] == sa]
+                df_sa = df[df['SA Name'].str.contains(sa, case=False, na=False)]
                 if df_sa.empty:
-                    sa_summary.append(f"{sa} | 0 | 0 | 0%")
+                    sa_summary.append(f"{sa.ljust(14)}| {str(0).center(16)}| {str(0).center(17)}| {'0%'.center(12)}")
                     continue
 
                 df_today = df_sa[df_sa['Created At'].dt.normalize() == today]
@@ -64,15 +67,17 @@ class SummaryHandlers:
                 jumlah_visit_hi = len(df_today)
                 jumlah_visit_mtd = len(df_mtd)
                 achievement = (jumlah_visit_mtd / target_visit) * 100 if target_visit > 0 else 0
-
-                sa_summary.append(f"{sa} | {jumlah_visit_hi} | {jumlah_visit_mtd} | {achievement:.0f}%")
+                sa_summary.append(f"{sa.ljust(14)}| {str(jumlah_visit_hi).center(16)}| {str(jumlah_visit_mtd).center(17)}| {f'{achievement:.0f}%'.center(12)}")
 
             # Header Summary STO
-            sto_summary = ["\nSTO | Jumlah Visit HI | Jumlah Visit MTD"]
+            sto_summary = []
+            sto_summary.append("\nSTO            | Jumlah Visit HI | Jumlah Visit MTD")
+            sto_summary.append("-" * 47)
+
             for sto in sorted(sto_list):
                 df_sto = df[df['STO'] == sto]
                 if df_sto.empty:
-                    sto_summary.append(f"{sto} | 0 | 0")
+                    sto_summary.append(f"{sto.ljust(14)}| {str(0).center(16)}| {str(0).center(17)}")
                     continue
 
                 df_today = df_sto[df_sto['Created At'].dt.normalize() == today]
@@ -82,9 +87,9 @@ class SummaryHandlers:
                 ]
                 jumlah_visit_hi = len(df_today)
                 jumlah_visit_mtd = len(df_mtd)
+                sto_summary.append(f"{sto.ljust(14)}| {str(jumlah_visit_hi).center(16)}| {str(jumlah_visit_mtd).center(17)}")
 
-                sto_summary.append(f"{sto} | {jumlah_visit_hi} | {jumlah_visit_mtd}")
-
+            # Gabungkan dan cetak hasil
             return "\n".join(sa_summary + sto_summary)
 
         except Exception as e:
@@ -93,7 +98,7 @@ class SummaryHandlers:
 
     def get_today_summary_by_id(self, sa_id, target_visit=50):
         """
-        Ambil ringkasan visit harian + MTD + achievement berdasarkan SA ID.
+        Ambil ringkasan visit harian + MTD + achievement berda  sarkan SA ID.
         Jumlah Visit HI dihitung berdasarkan jumlah entri (baris) di tanggal hari ini.
         """
         df = self.get_summary_dataframe()
