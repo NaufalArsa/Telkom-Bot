@@ -91,16 +91,16 @@ class CommandHandlers:
                             "3. Kemudian kirim bagian yang kurang\n"
                             "4. Share lokasi atau kirim Link Google Maps\n\n"
                             "💡 **Command yang tersedia:**\n"
-                            "• /format - Format pengisian data\n"
-                            "• /help - Bantuan lengkap\n"
-                            "• /status - Cek status data sementara\n"
-                            "• /clear - Hapus data sementara\n"
-                            "• /odp - Cari 5 ODP terdekat dari lokasi Anda.\n"
-                            "• /potensi - Cari 5 Potensi terdekat dari lokasi Anda.\n"
-                            "• /psb - Cari 5 PSB terkait dengan nama customer.\n"
-                            "• /brosur - Dapatkan brosur sesuai jenis yang diminta.\n"
-                            "• /record - Cek riwayat input Anda.\n"
-                            "• /summary [SA_ID] - Dapatkan ringkasan data untuk SA tertentu.\n\n")
+                            "• /format: Format pengisian data\n"
+                            "• /help: Bantuan lengkap\n"
+                            "• /status: Cek status data sementara\n"
+                            "• /clear: Hapus data sementara\n"
+                            "• /odp: Cari 5 ODP terdekat dari lokasi Anda.\n"
+                            "• /potensi: Cari 5 Potensi terdekat dari lokasi Anda.\n"
+                            "• /psb + Nama Customer: Cari 5 PSB terkait dengan nama customer.\n"
+                            "• /brosur + Jenis Brosur: Dapatkan brosur sesuai jenis yang diminta.\n"
+                            "• /record: Cek riwayat input Anda.\n"
+                            "• /summary + SA ID: Dapatkan ringkasan data untuk SA tertentu.\n\n")
             user_started[user_id] = True
     
     # Status handler for /status command
