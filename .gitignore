@@ -6,4 +6,4 @@ bot_optimized.py
 secrets.toml
 get_token.py
 survey.py
-fetch_api.py
+fetch_all.py

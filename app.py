@@ -299,8 +299,40 @@ def check_bot_status():
         return st.session_state.bot_process.poll() is None
     return False
 
+def run_fetch_on_start():
+    if not st.session_state.get("fetch_api_ran", False):
+        try:
+            subprocess.Popen([sys.executable, "fetch_api.py"])
+            st.session_state.fetch_api_ran = True
+            st.success("✅ fetch_api.py has been triggered on app start")
+        except Exception as e:
+            st.error(f"❌ Failed to run fetch_api.py: {e}")
+
+def schedule_daily_fetch():
+    def fetch_loop():
+        while True:
+            now = datetime.now()
+            if now.hour == 15 and now.minute == 0:
+                try:
+                    subprocess.Popen([sys.executable, "fetch_api.py"])
+                    print("✅ fetch_api.py executed at 15:00")
+                except Exception as e:
+                    print(f"❌ Error running fetch_api.py: {e}")
+                time.sleep(60)  # Avoid running multiple times in one minute
+            else:
+                time.sleep(30)  # Check every 30 seconds
+
+    # Only start the thread once
+    if not st.session_state.get("fetch_thread_started", False):
+        thread = threading.Thread(target=fetch_loop, daemon=True)
+        thread.start()
+        st.session_state.fetch_thread_started = True
+
 # Main dashboard
 def main():
+    run_fetch_on_start()
+    schedule_daily_fetch()
+    
     st.markdown('<h1 class="main-header">🤖 YOVI Dashboard</h1>', unsafe_allow_html=True)
     
     # Sidebar

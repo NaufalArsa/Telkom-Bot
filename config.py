@@ -20,6 +20,9 @@ BOT_TOKEN = get_env_var('BOT_TOKEN')
 SHEET_NAME = get_env_var('GOOGLE_SHEET_NAME')
 SUPABASE_URL = get_env_var('SUPABASE_URL', required=False)
 SUPABASE_KEY = get_env_var('SUPABASE_KEY', required=False)
+GOOGLE_CREDS_JSON = get_env_var('GOOGLE_CREDS_JSON', required=False)
+API_TOKEN = get_env_var('API_TOKEN', required=False)
+API_URL = get_env_var('API_URL', required=False)
 
 # Type assertions to satisfy the linter
 assert API_ID is not None
