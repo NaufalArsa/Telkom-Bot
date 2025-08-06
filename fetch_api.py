@@ -2,6 +2,7 @@ import requests
 import ast
 import logging
 import re
+import time
 from datetime import datetime
 from dateutil import parser
 import pytz
@@ -50,40 +51,74 @@ class FetchAPI:
             logger.error(f"Error determining total pages: {str(e)}")
             return 1
 
-    def fetch_latest_survey_data(self, count=50, witel_id=2, last_id=None):
+    def fetch_survey_data(self, witel_id=2, per_page=50):
+        """Fetch all records with id > latest ID from Google Sheet"""
         if not self.validate_token():
             return []
-        
-        page = self.get_total_pages()
 
-        params = {
-            "witel_id": witel_id,
-            "per_page": count,
-            "page": page,
-            "sort_column": "id",
-            "sort_direction": "asc"
-        }
+        # Get latest ID from sheet
+        last_id = self.get_latest_id_from_sheet()
+        logger.info(f"Latest ID from sheet: {last_id}")
+        last_id_int = int(last_id) if last_id is not None else 0
+
+        all_records = []
+        current_page = 27
+        total_pages = None
 
         headers = {
             "Authorization": f"Bearer {self.token}",
-            "Accept": "application/json",
-            "Cache-Control": "no-cache"
+            "Accept": "application/json"
         }
 
-        try:
-            logger.info(f"Fetching data from API: page={page}, count={count}, witel_id={witel_id}, last_id={last_id}")
-            response = requests.get(self.api_url, params=params, headers=headers, timeout=15)
-            response.raise_for_status()
-            data = response.json()
-            records = data.get("data", [])
+        while True:
+            params = {
+                "witel_id": witel_id,
+                "per_page": per_page,
+                "page": current_page,
+                "sort_column": "id",
+                "sort_direction": "asc"
+            }
 
-            if last_id:
-                records = [r for r in records if int(r.get("id", 0)) > int(last_id)]
+            try:
+                logger.info(f"Fetching page {current_page}")
+                response = requests.get(
+                    self.api_url,
+                    params=params,
+                    headers=headers,
+                    timeout=15
+                )
+                response.raise_for_status()
+                data = response.json()
 
-            return records
-        except Exception as e:
-            logger.error(f"Fetch error: {str(e)}")
-            return []
+                page_records = data.get("data", [])
+
+                # Filter only records with id > last_id
+                new_records = [r for r in page_records if int(r.get("id", 0)) > last_id_int]
+                all_records.extend(new_records)
+
+                # Determine total pages if not already set
+                if total_pages is None:
+                    last_url = data.get("links", {}).get("last", "")
+                    match = re.search(r"page=(\d+)", last_url)
+                    total_pages = int(match.group(1)) if match else 1
+
+                # Stop early if all records in current page are <= last_id
+                if not new_records and current_page >= total_pages:
+                    break
+
+                current_page += 1
+                if current_page > total_pages:
+                    break
+
+                time.sleep(0.5)  # avoid rate limit
+
+            except Exception as e:
+                logger.error(f"Error fetching page {current_page}: {str(e)}")
+                break
+
+        logger.info(f"Fetched {len(all_records)} new records (ID > {last_id_int})")
+        return all_records
+
 
     def parse_survey_data(self, records):
         rows = []
@@ -225,7 +260,7 @@ class FetchAPI:
             latest_id = self.get_latest_id_from_sheet()
             logger.info(f"Latest ID in sheet: {latest_id}")
 
-            records = self.fetch_latest_survey_data(last_id=latest_id)
+            records = self.fetch_survey_data()
             if not records:
                 logger.info("No new records received")
                 return

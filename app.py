@@ -312,7 +312,7 @@ def schedule_daily_fetch():
     def fetch_loop():
         while True:
             now = datetime.now()
-            if now.hour == 15 and now.minute == 0:
+            if now.hour == 8 and now.minute == 0:
                 try:
                     subprocess.Popen([sys.executable, "fetch_api.py"])
                     print("✅ fetch_api.py executed at 15:00")
