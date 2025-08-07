@@ -312,15 +312,31 @@ def schedule_daily_fetch():
     def fetch_loop():
         while True:
             now = datetime.now()
-            if now.hour == 8 and now.minute == 0:
+            
+            # Run fetch_api.py at 09:00, 12:00, and 15:00
+            if now.hour == 2 and now.minute == 0:
+                try:
+                    subprocess.Popen([sys.executable, "fetch_api.py"])
+                    print("✅ fetch_api.py executed at 09:00")
+                except Exception as e:
+                    print(f"❌ Error running fetch_api.py: {e}")
+                time.sleep(60)
+            elif now.hour == 5 and now.minute == 0:
+                try:
+                    subprocess.Popen([sys.executable, "fetch_api.py"])
+                    print("✅ fetch_api.py executed at 12:00")
+                except Exception as e:
+                    print(f"❌ Error running fetch_api.py: {e}")
+                time.sleep(60)
+            elif now.hour == 8 and now.minute == 0:
                 try:
                     subprocess.Popen([sys.executable, "fetch_api.py"])
                     print("✅ fetch_api.py executed at 15:00")
                 except Exception as e:
                     print(f"❌ Error running fetch_api.py: {e}")
-                time.sleep(60)  # Avoid running multiple times in one minute
+                time.sleep(60)
             else:
-                time.sleep(30)  # Check every 30 seconds
+                time.sleep(30)
 
     # Only start the thread once
     if not st.session_state.get("fetch_thread_started", False):
