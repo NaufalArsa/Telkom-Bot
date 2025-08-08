@@ -313,25 +313,11 @@ def schedule_daily_fetch():
         while True:
             now = datetime.now()
             
-            # Run fetch_api.py at 09:00, 12:00, and 15:00
-            if now.hour == 1 and now.minute == 0:
+            # Run fetch_api.py every 3 hours
+            if now.hour % 3 == 0 and now.minute == 0:
                 try:
                     subprocess.Popen([sys.executable, "fetch_api.py"])
-                    print("✅ fetch_api.py executed at 09:00")
-                except Exception as e:
-                    print(f"❌ Error running fetch_api.py: {e}")
-                time.sleep(60)
-            elif now.hour == 5 and now.minute == 0:
-                try:
-                    subprocess.Popen([sys.executable, "fetch_api.py"])
-                    print("✅ fetch_api.py executed at 12:00")
-                except Exception as e:
-                    print(f"❌ Error running fetch_api.py: {e}")
-                time.sleep(60)
-            elif now.hour == 8 and now.minute == 0:
-                try:
-                    subprocess.Popen([sys.executable, "fetch_api.py"])
-                    print("✅ fetch_api.py executed at 15:00")
+                    print(f"✅ fetch_api.py executed at {now.strftime('%H:%M')}")
                 except Exception as e:
                     print(f"❌ Error running fetch_api.py: {e}")
                 time.sleep(60)
